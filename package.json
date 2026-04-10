@@ -1,0 +1,19 @@
+{
+  "name": "pidef",
+  "version": "1.0.0",
+  "description": "Minimal PDF reader with touchscreen swipe navigation",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc && sass src/styles.scss dist/styles.css && cp src/index.html dist/index.html",
+    "start": "npm run build && electron dist/main.js",
+    "dev": "npm run build && electron dist/main.js"
+  },
+  "dependencies": {
+    "electron": "^35.0.0",
+    "pdfjs-dist": "^3.11.174"
+  },
+  "devDependencies": {
+    "sass": "^1.87.0",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pidef</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="toolbar">
+    <button id="btn-open">Open PDF</button>
+    <div id="spacer-left"></div>
+    <span id="page-label"></span>
+    <div id="spacer-right"></div>
+    <button id="btn-fullscreen" title="Fullscreen  F11">⛶</button>
+  </div>
+
+  <div id="canvas-container">
+    <canvas id="pdf-canvas"></canvas>
+    <div id="empty-message">Open a PDF to start reading</div>
+  </div>
+
+  <div id="nav-bar">
+    <button id="btn-first" title="First page">⏮</button>
+    <button id="btn-prev" title="Previous page">◀  Prev</button>
+    <input type="range" id="page-slider" min="0" max="1" value="0">
+    <span id="nav-label"></span>
+    <button id="btn-next" title="Next page">Next  ▶</button>
+    <button id="btn-last" title="Last page">⏭</button>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

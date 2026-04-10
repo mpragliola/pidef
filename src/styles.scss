@@ -1,0 +1,144 @@
+$bg-dark: #212121;
+$bg-toolbar: #2a2a2a;
+$text-color: #ddd;
+$text-muted: #8c8c8c;
+$border-color: #3a3a3a;
+$btn-bg: #3a3a3a;
+$btn-hover: #4a4a4a;
+$btn-active: #555;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: $bg-dark;
+  color: $text-color;
+  font-family: system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+button {
+  background: $btn-bg;
+  color: $text-color;
+  border: 1px solid $border-color;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: $btn-hover;
+  }
+
+  &:active {
+    background: $btn-active;
+  }
+}
+
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: $bg-toolbar;
+  border-bottom: 1px solid $border-color;
+  min-height: 38px;
+
+  #spacer-left,
+  #spacer-right {
+    flex: 1;
+  }
+
+  #page-label {
+    font-size: 13px;
+    color: $text-muted;
+    white-space: nowrap;
+  }
+
+  #btn-open {
+    font-size: 16px;
+    padding: 8px 20px;
+    font-weight: 600;
+  }
+
+  #btn-fullscreen {
+    font-size: 16px;
+    padding: 2px 8px;
+  }
+}
+
+#canvas-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+
+  #empty-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    color: $text-muted;
+    pointer-events: none;
+  }
+}
+
+#nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 10px;
+  background: $bg-toolbar;
+  border-top: 1px solid $border-color;
+  min-height: 70px;
+
+  button {
+    padding: 8px 16px;
+    font-size: 16px;
+    min-width: 50px;
+  }
+
+  #btn-first,
+  #btn-last {
+    font-size: 18px;
+    min-width: 48px;
+    min-height: 48px;
+    padding: 8px 12px;
+  }
+
+  #btn-prev,
+  #btn-next {
+    min-width: 80px;
+    min-height: 48px;
+  }
+
+  #page-slider {
+    flex: 1;
+    max-width: 300px;
+    height: 6px;
+    cursor: pointer;
+  }
+
+  #nav-label {
+    font-size: 13px;
+    color: $text-muted;
+    min-width: 110px;
+    text-align: center;
+  }
+}
