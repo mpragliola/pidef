@@ -319,8 +319,7 @@ function scheduleBrightnessHide() {
 
 // ── Sepia control ────────────────────────────────────────────────────────────
 
-function applyFilters() {
-  const canvasEl = document.getElementById("pdf-canvas") as HTMLCanvasElement;
+function getFilterString(): string {
   const filters: string[] = [];
 
   if (sepiaEnabled) {
@@ -333,7 +332,12 @@ function applyFilters() {
     filters.push("url(#sharpen-filter)");
   }
 
-  canvasEl.style.filter = filters.join(" ");
+  return filters.join(" ");
+}
+
+function applyFilters() {
+  // Filters are now applied in draw() to the image content only, not the background
+  draw();
 }
 
 function toggleSepia() {
@@ -393,6 +397,9 @@ function draw() {
   }
 
   if (!currentSurf) return;
+  // Apply filters only to the drawn content, not the background
+  const filterStr = getFilterString();
+  ctx.filter = filterStr;
 
   // ── DRAGGING / SNAP ──────────────────────────────────────────────────
   if (state === "dragging" || state === "snap") {
@@ -403,6 +410,7 @@ function draw() {
         ctx.drawImage(adjSurf, dragAdjDir * w + dragX, 0, w, h);
       }
     }
+    ctx.filter = "none";
     return;
   }
 
@@ -417,11 +425,13 @@ function draw() {
     ctx.globalAlpha = ease;
     ctx.drawImage(currentSurf, inX, 0, w, h);
     ctx.globalAlpha = 1.0;
+    ctx.filter = "none";
     return;
   }
 
   // ── IDLE ─────────────────────────────────────────────────────────────
   ctx.drawImage(currentSurf, 0, 0, w, h);
+  ctx.filter = "none";
 }
 
 // ── Animation loop ───────────────────────────────────────────────────────────
