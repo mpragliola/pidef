@@ -1,11 +1,113 @@
-$bg-dark: #212121;
-$bg-toolbar: #2a2a2a;
-$text-color: #ddd;
-$text-muted: #8c8c8c;
-$border-color: #3a3a3a;
-$btn-bg: #3a3a3a;
-$btn-hover: #4a4a4a;
-$btn-active: #555;
+// ============================================================================
+// THEMING SYSTEM
+// ============================================================================
+
+// Theme variables - all colors, typography, and spacing tokens
+$themes: (
+  'dark': (
+    // Colors
+    bg-primary: #212121,
+    bg-secondary: #2a2a2a,
+    text-primary: #ddd,
+    text-secondary: #8c8c8c,
+    border: #3a3a3a,
+    button-bg: #3a3a3a,
+    button-hover: #4a4a4a,
+    button-active: #555,
+  ),
+  'light': (
+    // Colors
+    bg-primary: #f5f5f5,
+    bg-secondary: #efefef,
+    text-primary: #212121,
+    text-secondary: #666,
+    border: #ddd,
+    button-bg: #e0e0e0,
+    button-hover: #d0d0d0,
+    button-active: #c0c0c0,
+  ),
+);
+
+// Get a theme color value
+@function theme-color($color-name, $theme: 'dark') {
+  @return map-get(map-get($themes, $theme), $color-name);
+}
+
+// Apply a theme using SCSS variable assignment
+@mixin apply-theme($theme: 'dark') {
+  --theme-bg-primary: #{theme-color(bg-primary, $theme)};
+  --theme-bg-secondary: #{theme-color(bg-secondary, $theme)};
+  --theme-text-primary: #{theme-color(text-primary, $theme)};
+  --theme-text-secondary: #{theme-color(text-secondary, $theme)};
+  --theme-border: #{theme-color(border, $theme)};
+  --theme-button-bg: #{theme-color(button-bg, $theme)};
+  --theme-button-hover: #{theme-color(button-hover, $theme)};
+  --theme-button-active: #{theme-color(button-active, $theme)};
+}
+
+// ============================================================================
+// DESIGN TOKENS - Typography, Spacing, Transitions
+// ============================================================================
+
+// Typography
+$font-family-system: system-ui, -apple-system, sans-serif;
+$font-size-xs: 12px;
+$font-size-sm: 13px;
+$font-size-base: 14px;
+$font-size-md: 16px;
+$font-size-lg: 18px;
+$font-size-xl: 20px;
+$font-size-2xl: 24px;
+$font-size-3xl: 28px;
+
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+
+// Spacing (8px base unit)
+$spacing-xs: 4px;
+$spacing-sm: 6px;
+$spacing-md: 8px;
+$spacing-lg: 12px;
+$spacing-xl: 16px;
+$spacing-2xl: 20px;
+$spacing-3xl: 24px;
+$spacing-4xl: 40px;
+
+// Borders & Radius
+$border-width: 1px;
+$border-radius-sm: 4px;
+$border-radius-md: 8px;
+
+// Touch Targets (minimum 44x44px, preferably 48x48px)
+$touch-target-min: 44px;
+$touch-target-lg: 48px;
+
+// Transitions & Animations
+$transition-fast: 0.15s;
+$transition-normal: 0.22s;
+$transition-slow: 0.3s;
+
+// ============================================================================
+// THEME APPLICATION
+// ============================================================================
+
+:root {
+  @include apply-theme('dark');
+}
+
+// Optional light theme toggle (can be activated via data-theme or class)
+[data-theme='light'] {
+  @include apply-theme('light');
+}
+
+body.light-theme {
+  @include apply-theme('light');
+}
+
+// ============================================================================
+// GLOBAL STYLES
+// ============================================================================
 
 * {
   margin: 0;
@@ -14,9 +116,10 @@ $btn-active: #555;
 }
 
 body {
-  background: $bg-dark;
-  color: $text-color;
-  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--theme-bg-primary);
+  color: var(--theme-text-primary);
+  font-family: $font-family-system;
+  font-size: $font-size-base;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -25,31 +128,35 @@ body {
 }
 
 button {
-  background: $btn-bg;
-  color: $text-color;
-  border: 1px solid $border-color;
-  border-radius: 4px;
-  padding: 4px 12px;
-  font-size: 13px;
+  background: var(--theme-button-bg);
+  color: var(--theme-text-primary);
+  border: $border-width solid var(--theme-border);
+  border-radius: $border-radius-sm;
+  padding: $spacing-xs $spacing-lg;
+  font-size: $font-size-sm;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background $transition-fast;
 
   &:hover {
-    background: $btn-hover;
+    background: var(--theme-button-hover);
   }
 
   &:active {
-    background: $btn-active;
+    background: var(--theme-button-active);
   }
 }
+
+// ============================================================================
+// TOOLBAR
+// ============================================================================
 
 #toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  background: $bg-toolbar;
-  border-bottom: 1px solid $border-color;
+  gap: $spacing-md;
+  padding: $spacing-sm $spacing-lg;
+  background: var(--theme-bg-secondary);
+  border-bottom: $border-width solid var(--theme-border);
   min-height: 38px;
 
   #spacer-left,
@@ -58,30 +165,34 @@ button {
   }
 
   #page-label {
-    font-size: 13px;
-    color: $text-muted;
+    font-size: $font-size-sm;
+    color: var(--theme-text-secondary);
     white-space: nowrap;
   }
 
   #btn-open {
-    font-size: 16px;
-    padding: 12px 24px;
-    font-weight: 600;
-    min-height: 48px;
+    font-size: $font-size-md;
+    padding: $spacing-lg $spacing-3xl;
+    font-weight: $font-weight-semibold;
+    min-height: $touch-target-lg;
     display: flex;
     align-items: center;
   }
 
   #btn-fullscreen {
-    font-size: 18px;
-    padding: 12px 16px;
-    min-height: 48px;
-    min-width: 48px;
+    font-size: $font-size-lg;
+    padding: $spacing-lg $spacing-xl;
+    min-height: $touch-target-lg;
+    min-width: $touch-target-lg;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 }
+
+// ============================================================================
+// CANVAS CONTAINER
+// ============================================================================
 
 #canvas-container {
   flex: 1;
@@ -105,14 +216,14 @@ button {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 40px;
-    padding: 40px;
-    background: $bg-dark;
-    font-size: 14px;
+    gap: $spacing-4xl;
+    padding: $spacing-4xl;
+    background: var(--theme-bg-primary);
+    font-size: $font-size-base;
 
     #welcome-hint {
-      font-size: 28px;
-      color: $text-muted;
+      font-size: $font-size-3xl;
+      color: var(--theme-text-secondary);
       text-align: center;
     }
 
@@ -121,54 +232,54 @@ button {
       max-width: 600px;
 
       #recent-files-label {
-        font-size: 20px;
-        color: $text-muted;
-        margin-bottom: 16px;
+        font-size: $font-size-xl;
+        color: var(--theme-text-secondary);
+        margin-bottom: $spacing-xl;
         text-align: center;
       }
 
       #recent-files-list {
         list-style: none;
-        border-radius: 8px;
+        border-radius: $border-radius-md;
         overflow: hidden;
-        border: 1px solid $border-color;
+        border: $border-width solid var(--theme-border);
 
         li {
-          padding: 12px 20px;
+          padding: $spacing-lg $spacing-2xl;
           min-height: 60px;
           display: flex;
           flex-direction: column;
           justify-content: center;
-          border-bottom: 1px solid $border-color;
+          border-bottom: $border-width solid var(--theme-border);
           cursor: pointer;
-          transition: background 0.15s;
-          background: $btn-bg;
+          transition: background $transition-fast;
+          background: var(--theme-button-bg);
 
           &:last-child {
             border-bottom: none;
           }
 
           &:hover {
-            background: $btn-hover;
+            background: var(--theme-button-hover);
           }
 
           &:active {
-            background: $btn-active;
+            background: var(--theme-button-active);
           }
 
           .filename {
-            font-size: 24px;
-            color: $text-color;
-            font-weight: 500;
+            font-size: $font-size-2xl;
+            color: var(--theme-text-primary);
+            font-weight: $font-weight-medium;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            margin-bottom: 4px;
+            margin-bottom: $spacing-xs;
           }
 
           .filepath {
-            font-size: 12px;
-            color: $text-muted;
+            font-size: $font-size-xs;
+            color: var(--theme-text-secondary);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -179,34 +290,38 @@ button {
   }
 }
 
+// ============================================================================
+// NAVIGATION BAR
+// ============================================================================
+
 #nav-bar {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 12px 10px;
-  background: $bg-toolbar;
-  border-top: 1px solid $border-color;
+  gap: $spacing-lg;
+  padding: $spacing-lg $spacing-md;
+  background: var(--theme-bg-secondary);
+  border-top: $border-width solid var(--theme-border);
   min-height: 70px;
 
   button {
-    padding: 8px 16px;
-    font-size: 16px;
+    padding: $spacing-md $spacing-xl;
+    font-size: $font-size-md;
     min-width: 50px;
   }
 
   #btn-first,
   #btn-last {
-    font-size: 18px;
-    min-width: 48px;
-    min-height: 48px;
-    padding: 8px 12px;
+    font-size: $font-size-lg;
+    min-width: $touch-target-lg;
+    min-height: $touch-target-lg;
+    padding: $spacing-md $spacing-lg;
   }
 
   #btn-prev,
   #btn-next {
     min-width: 80px;
-    min-height: 48px;
+    min-height: $touch-target-lg;
   }
 
   #page-slider {
@@ -217,8 +332,8 @@ button {
   }
 
   #nav-label {
-    font-size: 13px;
-    color: $text-muted;
+    font-size: $font-size-sm;
+    color: var(--theme-text-secondary);
     min-width: 110px;
     text-align: center;
   }
