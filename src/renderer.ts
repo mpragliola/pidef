@@ -1,9 +1,15 @@
+interface FileRecord {
+  path: string;
+  page: number;
+}
+
 interface PidefAPI {
   openFileDialog: () => Promise<void>;
   toggleFullscreen: () => Promise<void>;
   getFullscreen: () => Promise<boolean>;
-  getRecentFiles: () => Promise<string[]>;
-  addRecentFile: (path: string) => Promise<void>;
+  getRecentFiles: () => Promise<FileRecord[]>;
+  addRecentFile: (path: string, page?: number) => Promise<void>;
+  updateFilePage: (path: string, page: number) => Promise<void>;
   onOpenFile: (cb: (path: string) => void) => void;
   onToggleFullscreen: (cb: () => void) => void;
 }
@@ -28,6 +34,7 @@ type State = "idle" | "dragging" | "snap" | "animating";
 let pdfDoc: import("pdfjs-dist").PDFDocumentProxy | null = null;
 let currentPage = 0;
 let nPages = 0;
+let currentFilePath = "";
 
 // Surface cache: page index -> ImageBitmap or OffscreenCanvas snapshot
 const surfCache = new Map<number, ImageBitmap>();
@@ -109,6 +116,9 @@ pageSlider.addEventListener("input", (e) => {
     // Update labels only, not slider (to avoid janky reset)
     pageLabel.textContent = `Page ${currentPage + 1} / ${nPages}`;
     navLabel.textContent = `Page ${currentPage + 1} / ${nPages}`;
+    if (currentFilePath && pdfDoc) {
+      pidef.updateFilePage(currentFilePath, currentPage);
+    }
   });
 });
 
@@ -356,6 +366,9 @@ async function beginPageChange(direction: number, adjSurf?: ImageBitmap | null) 
   startTick();
   bgScan();
   updateUI();
+  if (currentFilePath && pdfDoc) {
+    pidef.updateFilePage(currentFilePath, currentPage);
+  }
 }
 
 function goNext() {
@@ -391,6 +404,9 @@ async function goToPage(pageIdx: number) {
   startTick();
   bgScan();
   updateUI();
+  if (currentFilePath && pdfDoc) {
+    pidef.updateFilePage(currentFilePath, currentPage);
+  }
 }
 
 function updateUI() {
@@ -432,12 +448,17 @@ async function loadFile(filePath: string) {
   const url = `file://${filePath}`;
   pdfDoc = await pdfjsLib.getDocument(url).promise;
   nPages = pdfDoc.numPages;
-  currentPage = 0;
 
-  console.log(`[pidef] loaded ${nPages} pages`);
+  // Restore saved page number
+  const recentFiles = await pidef.getRecentFiles();
+  const fileRecord = recentFiles.find((f) => f.path === filePath);
+  currentPage = fileRecord ? Math.min(fileRecord.page, nPages - 1) : 0;
+
+  console.log(`[pidef] loaded ${nPages} pages, resuming at page ${currentPage + 1}`);
 
   const name = filePath.split("/").pop() || filePath;
   document.title = `pidef — ${name}`;
+  currentFilePath = filePath;
 
   // Force a fresh render at current size
   if (cacheWidth > 0 && cacheHeight > 0) {
@@ -447,8 +468,8 @@ async function loadFile(filePath: string) {
     bgScan();
   }
 
-  // Add to recent files
-  await pidef.addRecentFile(filePath);
+  // Add to recent files with current page
+  await pidef.addRecentFile(filePath, currentPage);
 
   updateUI();
   draw();
@@ -599,17 +620,17 @@ async function renderRecentFiles() {
   const files = await pidef.getRecentFiles();
   recentFilesList.innerHTML = "";
 
-  for (const filePath of files) {
+  for (const fileRecord of files) {
     const li = document.createElement("li");
-    const filename = filePath.split("/").pop() || filePath;
+    const filename = fileRecord.path.split("/").pop() || fileRecord.path;
 
     li.innerHTML = `
       <div class="filename">${filename}</div>
-      <div class="filepath">${filePath}</div>
+      <div class="filepath">${fileRecord.path}</div>
     `;
 
     li.addEventListener("click", () => {
-      loadFile(filePath);
+      loadFile(fileRecord.path);
     });
 
     recentFilesList.appendChild(li);

@@ -65,13 +65,21 @@ button {
 
   #btn-open {
     font-size: 16px;
-    padding: 8px 20px;
+    padding: 12px 24px;
     font-weight: 600;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
   }
 
   #btn-fullscreen {
-    font-size: 16px;
-    padding: 2px 8px;
+    font-size: 18px;
+    padding: 12px 16px;
+    min-height: 48px;
+    min-width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 

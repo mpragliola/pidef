@@ -6,17 +6,27 @@ let mainWindow: BrowserWindow | null = null;
 
 const RECENT_FILES_MAX = 10;
 
+interface FileRecord {
+  path: string;
+  page: number;
+}
+
 function getRecentFilesPath(): string {
   return path.join(app.getPath("userData"), "recent-files.json");
 }
 
-function loadRecentFiles(): string[] {
+function loadRecentFiles(): FileRecord[] {
   try {
     const filePath = getRecentFilesPath();
     if (fs.existsSync(filePath)) {
       const data = fs.readFileSync(filePath, "utf-8");
       const files = JSON.parse(data);
-      return Array.isArray(files) ? files : [];
+      // Handle both old (string[]) and new (FileRecord[]) formats
+      if (Array.isArray(files)) {
+        return files.map((f) =>
+          typeof f === "string" ? { path: f, page: 0 } : f
+        );
+      }
     }
   } catch (err) {
     console.error("Failed to load recent files:", err);
@@ -24,7 +34,7 @@ function loadRecentFiles(): string[] {
   return [];
 }
 
-function saveRecentFiles(files: string[]): void {
+function saveRecentFiles(files: FileRecord[]): void {
   try {
     const filePath = getRecentFilesPath();
     const dir = path.dirname(filePath);
@@ -37,15 +47,24 @@ function saveRecentFiles(files: string[]): void {
   }
 }
 
-function addRecentFile(filePath: string): void {
+function addRecentFile(filePath: string, page: number = 0): void {
   let files = loadRecentFiles();
   // Remove if already present
-  files = files.filter((f) => f !== filePath);
+  files = files.filter((f) => f.path !== filePath);
   // Add to front
-  files.unshift(filePath);
+  files.unshift({ path: filePath, page });
   // Keep only the most recent N
   files = files.slice(0, RECENT_FILES_MAX);
   saveRecentFiles(files);
+}
+
+function updateFilePage(filePath: string, page: number): void {
+  let files = loadRecentFiles();
+  const file = files.find((f) => f.path === filePath);
+  if (file) {
+    file.page = page;
+    saveRecentFiles(files);
+  }
 }
 
 function createWindow(filePath?: string) {
@@ -118,8 +137,12 @@ ipcMain.handle("get-recent-files", () => {
   return loadRecentFiles();
 });
 
-ipcMain.handle("add-recent-file", (_event, filePath: string) => {
-  addRecentFile(filePath);
+ipcMain.handle("add-recent-file", (_event, filePath: string, page?: number) => {
+  addRecentFile(filePath, page ?? 0);
+});
+
+ipcMain.handle("update-file-page", (_event, filePath: string, page: number) => {
+  updateFilePage(filePath, page);
 });
 
 ipcMain.handle("toggle-fullscreen", () => {
