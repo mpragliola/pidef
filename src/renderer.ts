@@ -2,6 +2,8 @@ interface PidefAPI {
   openFileDialog: () => Promise<void>;
   toggleFullscreen: () => Promise<void>;
   getFullscreen: () => Promise<boolean>;
+  getRecentFiles: () => Promise<string[]>;
+  addRecentFile: (path: string) => Promise<void>;
   onOpenFile: (cb: (path: string) => void) => void;
   onToggleFullscreen: (cb: () => void) => void;
 }
@@ -55,7 +57,8 @@ let rafId: number | null = null;
 
 const canvas = document.getElementById("pdf-canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
-const emptyMsg = document.getElementById("empty-message")!;
+const welcomeScreen = document.getElementById("welcome-screen")!;
+const recentFilesList = document.getElementById("recent-files-list")!;
 const pageLabel = document.getElementById("page-label")!;
 const navLabel = document.getElementById("nav-label")!;
 
@@ -397,14 +400,14 @@ function updateUI() {
     navLabel.textContent = text;
     pageSlider.max = String(nPages - 1);
     pageSlider.value = String(currentPage);
-    emptyMsg.style.display = "none";
+    welcomeScreen.style.display = "none";
     document.title = `pidef`;
   } else {
     pageLabel.textContent = "";
     navLabel.textContent = "";
     pageSlider.max = "1";
     pageSlider.value = "0";
-    emptyMsg.style.display = "";
+    welcomeScreen.style.display = "";
   }
 }
 
@@ -443,6 +446,9 @@ async function loadFile(filePath: string) {
     currentSurf = bmp;
     bgScan();
   }
+
+  // Add to recent files
+  await pidef.addRecentFile(filePath);
 
   updateUI();
   draw();
@@ -587,7 +593,31 @@ pidef.onToggleFullscreen(() => {
   pidef.toggleFullscreen();
 });
 
+// ── Recent Files UI ─────────────────────────────────────────────────────────
+
+async function renderRecentFiles() {
+  const files = await pidef.getRecentFiles();
+  recentFilesList.innerHTML = "";
+
+  for (const filePath of files) {
+    const li = document.createElement("li");
+    const filename = filePath.split("/").pop() || filePath;
+
+    li.innerHTML = `
+      <div class="filename">${filename}</div>
+      <div class="filepath">${filePath}</div>
+    `;
+
+    li.addEventListener("click", () => {
+      loadFile(filePath);
+    });
+
+    recentFilesList.appendChild(li);
+  }
+}
+
 // ── Init ─────────────────────────────────────────────────────────────────────
 
 updateUI();
 resizeCanvas();
+renderRecentFiles();
