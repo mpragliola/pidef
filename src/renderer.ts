@@ -73,6 +73,10 @@ document.getElementById("btn-open")!.addEventListener("click", () => {
   pidef.openFileDialog();
 });
 
+document.getElementById("btn-close")!.addEventListener("click", () => {
+  closePdf();
+});
+
 document.getElementById("btn-fullscreen")!.addEventListener("click", () => {
   pidef.toggleFullscreen();
 });
@@ -407,6 +411,20 @@ async function goToPage(pageIdx: number) {
   if (currentFilePath && pdfDoc) {
     pidef.updateFilePage(currentFilePath, currentPage);
   }
+}
+
+function closePdf() {
+  cancelAll();
+  pdfDoc = null;
+  currentFilePath = "";
+  currentPage = 0;
+  nPages = 0;
+  currentSurf = null;
+  animFromSurf = null;
+  surfCache.clear();
+  rendering.clear();
+  updateUI();
+  draw();
 }
 
 function updateUI() {

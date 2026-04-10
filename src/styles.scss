@@ -179,6 +179,16 @@ button {
     align-items: center;
   }
 
+  #btn-close {
+    font-size: $font-size-lg;
+    padding: $spacing-lg $spacing-xl;
+    min-height: $touch-target-lg;
+    min-width: $touch-target-lg;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   #btn-fullscreen {
     font-size: $font-size-lg;
     padding: $spacing-lg $spacing-xl;
