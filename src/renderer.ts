@@ -531,7 +531,12 @@ async function goToPage(pageIdx: number) {
   }
 }
 
-function closePdf() {
+async function closePdf() {
+  // Add to recent files if we had a file open
+  if (currentFilePath) {
+    await pidef.addRecentFile(currentFilePath, currentPage);
+  }
+
   cancelAll();
   pdfDoc = null;
   currentFilePath = "";
