@@ -9,6 +9,7 @@ interface PidefAPI {
   openFileDialog: () => Promise<void>;
   toggleFullscreen: () => Promise<void>;
   getFullscreen: () => Promise<boolean>;
+  setBrightness: (level: number) => Promise<void>;
   getRecentFiles: () => Promise<FileRecord[]>;
   addRecentFile: (path: string, page?: number) => Promise<void>;
   updateFilePage: (path: string, page: number) => Promise<void>;
@@ -20,6 +21,7 @@ interface PidefAPI {
   openFileDialog: () => ipcRenderer.invoke("open-file-dialog"),
   toggleFullscreen: () => ipcRenderer.invoke("toggle-fullscreen"),
   getFullscreen: () => ipcRenderer.invoke("get-fullscreen"),
+  setBrightness: (level: number) => ipcRenderer.invoke("set-brightness", level),
   getRecentFiles: () => ipcRenderer.invoke("get-recent-files"),
   addRecentFile: (path: string, page?: number) => ipcRenderer.invoke("add-recent-file", path, page),
   updateFilePage: (path: string, page: number) => ipcRenderer.invoke("update-file-page", path, page),

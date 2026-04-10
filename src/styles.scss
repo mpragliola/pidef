@@ -298,6 +298,35 @@ button {
       }
     }
   }
+
+  #brightness-hud {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 160px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity $transition-fast ease;
+    z-index: 10;
+
+    &.visible {
+      opacity: 1;
+    }
+
+    #brightness-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.85);
+      transition: height 0.05s linear;
+    }
+  }
 }
 
 // ============================================================================

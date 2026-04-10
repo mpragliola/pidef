@@ -1,10 +1,33 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu } from "electron";
 import * as path from "path";
 import * as fs from "fs";
+import { exec } from "child_process";
+
+// Debug logging to file
+const debugLogFile = "/tmp/pidef-brightness-debug.log";
+function debugLog(msg: string) {
+  const timestamp = new Date().toISOString();
+  const line = `${timestamp} ${msg}\n`;
+  try {
+    fs.appendFileSync(debugLogFile, line);
+  } catch (e) {
+    // ignore
+  }
+  console.log(`[brightness] ${msg}`);
+}
 
 let mainWindow: BrowserWindow | null = null;
 
 const RECENT_FILES_MAX = 10;
+
+// Check brightnessctl is available at startup
+exec("which brightnessctl", (err) => {
+  if (!err) {
+    debugLog("brightnessctl is available");
+  } else {
+    debugLog("WARNING: brightnessctl not found. Install with: sudo apt install brightnessctl");
+  }
+});
 
 interface FileRecord {
   path: string;
@@ -152,6 +175,38 @@ ipcMain.handle("toggle-fullscreen", () => {
 
 ipcMain.handle("get-fullscreen", () => {
   return mainWindow?.isFullScreen() ?? false;
+});
+
+ipcMain.handle("set-brightness", (_event, level: number) => {
+  const clamped = Math.max(0.1, Math.min(1.0, level));
+  const percentage = Math.round(clamped * 100);
+  // Try without sudo first (if udev rules are set up), fall back to sudo
+  let cmd = `brightnessctl set ${percentage}%`;
+  debugLog(`Executing: ${cmd}`);
+  return new Promise<void>((resolve, reject) => {
+    exec(cmd, (err, stdout, stderr) => {
+      if (err && err.message.includes("Permission denied")) {
+        // Fall back to sudo if no udev rule
+        debugLog(`Permission denied, trying with sudo`);
+        cmd = `sudo brightnessctl set ${percentage}%`;
+        exec(cmd, (err2) => {
+          if (err2) {
+            debugLog(`Error: ${err2.message}`);
+            reject(err2);
+          } else {
+            debugLog(`Success (via sudo): brightness set to ${percentage}%`);
+            resolve();
+          }
+        });
+      } else if (err) {
+        debugLog(`Error: ${err.message}`);
+        reject(err);
+      } else {
+        debugLog(`Success: brightness set to ${percentage}%`);
+        resolve();
+      }
+    });
+  });
 });
 
 app.whenReady().then(() => {

@@ -7,6 +7,7 @@ interface PidefAPI {
   openFileDialog: () => Promise<void>;
   toggleFullscreen: () => Promise<void>;
   getFullscreen: () => Promise<boolean>;
+  setBrightness: (level: number) => Promise<void>;
   getRecentFiles: () => Promise<FileRecord[]>;
   addRecentFile: (path: string, page?: number) => Promise<void>;
   updateFilePage: (path: string, page: number) => Promise<void>;
@@ -26,6 +27,11 @@ const SNAP_MS = 150;
 const THRESHOLD_PX = 40;
 const SLIDE_PX = 40;
 const PRERENDER_FWD = 2;
+
+const BRIGHTNESS_ZONE_PX = 60;
+const BRIGHTNESS_MIN = 0.1;
+const BRIGHTNESS_MAX = 1.0;
+const BRIGHTNESS_PX_PER_UNIT = 200;
 
 // ── State ────────────────────────────────────────────────────────────────────
 
@@ -56,6 +62,13 @@ let dragX = 0;
 let dragAdjDir = 0;
 let snapFromX = 0;
 let dragCommitted = false;
+
+// Brightness state
+let inBrightnessDrag = false;
+let brightness = 1.0;
+let pointerStartY = 0;
+let brightnessAtDragStart = 1.0;
+let brightnessHideTimer: ReturnType<typeof setTimeout> | null = null;
 
 // RAF handle
 let rafId: number | null = null;
@@ -259,6 +272,33 @@ function resizeCanvas() {
 
 const resizeObserver = new ResizeObserver(() => resizeCanvas());
 resizeObserver.observe(canvas.parentElement!);
+
+// ── Brightness control ───────────────────────────────────────────────────────
+
+function applyBrightness() {
+  console.log(`[brightness] Setting brightness to ${brightness.toFixed(3)}`);
+  pidef.setBrightness(brightness).catch(err => {
+    console.error(`[brightness] Failed to set brightness: ${err.message}`);
+  });
+}
+
+function updateBrightnessHud(visible: boolean) {
+  const hud = document.getElementById("brightness-hud")!;
+  const fill = document.getElementById("brightness-fill")!;
+  // Map brightness [BRIGHTNESS_MIN..BRIGHTNESS_MAX] to [0..100]%
+  const pct = ((brightness - BRIGHTNESS_MIN) / (BRIGHTNESS_MAX - BRIGHTNESS_MIN)) * 100;
+  fill.style.height = `${pct.toFixed(1)}%`;
+  if (visible) {
+    hud.classList.add("visible");
+  } else {
+    hud.classList.remove("visible");
+  }
+}
+
+function scheduleBrightnessHide() {
+  if (brightnessHideTimer) clearTimeout(brightnessHideTimer);
+  brightnessHideTimer = setTimeout(() => updateBrightnessHud(false), 1500);
+}
 
 // ── Drawing ──────────────────────────────────────────────────────────────────
 
@@ -503,6 +543,17 @@ canvas.addEventListener("pointerdown", (e) => {
   pointerDown = true;
   dragCommitted = false;
   pointerStartX = e.clientX;
+  pointerStartY = e.clientY;
+
+  if (e.clientX < BRIGHTNESS_ZONE_PX) {
+    inBrightnessDrag = true;
+    brightnessAtDragStart = brightness;
+    if (brightnessHideTimer) clearTimeout(brightnessHideTimer);
+    updateBrightnessHud(true);
+    canvas.setPointerCapture(e.pointerId);
+    return;
+  }
+
   cancelAll();
   dragX = 0;
   dragAdjDir = 0;
@@ -512,6 +563,15 @@ canvas.addEventListener("pointerdown", (e) => {
 });
 
 canvas.addEventListener("pointermove", (e) => {
+  if (inBrightnessDrag) {
+    const dy = pointerStartY - e.clientY;
+    brightness = Math.max(BRIGHTNESS_MIN, Math.min(BRIGHTNESS_MAX,
+      brightnessAtDragStart + dy / BRIGHTNESS_PX_PER_UNIT));
+    applyBrightness();
+    updateBrightnessHud(true);
+    return;
+  }
+
   if (!pointerDown || state !== "dragging" || dragCommitted) return;
   const dx = e.clientX - pointerStartX;
   dragX = dx;
@@ -547,6 +607,14 @@ canvas.addEventListener("pointerup", (e) => {
   if (!pointerDown) return;
   pointerDown = false;
   canvas.releasePointerCapture(e.pointerId);
+
+  if (inBrightnessDrag) {
+    inBrightnessDrag = false;
+    localStorage.setItem("pidef-brightness", brightness.toString());
+    scheduleBrightnessHide();
+    return;
+  }
+
   if (!dragCommitted) {
     const moved = Math.abs(e.clientX - pointerStartX);
     if (moved < TAP_MAX_MOVE) {
@@ -572,6 +640,13 @@ canvas.addEventListener("pointercancel", (e) => {
   if (!pointerDown) return;
   pointerDown = false;
   canvas.releasePointerCapture(e.pointerId);
+
+  if (inBrightnessDrag) {
+    inBrightnessDrag = false;
+    scheduleBrightnessHide();
+    return;
+  }
+
   if (!dragCommitted) {
     doDragCancel();
   }
@@ -656,6 +731,9 @@ async function renderRecentFiles() {
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────────
+
+brightness = parseFloat(localStorage.getItem("pidef-brightness") ?? "1.0");
+applyBrightness();
 
 updateUI();
 resizeCanvas();
