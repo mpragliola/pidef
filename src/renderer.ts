@@ -70,8 +70,10 @@ let pointerStartY = 0;
 let brightnessAtDragStart = 1.0;
 let brightnessHideTimer: ReturnType<typeof setTimeout> | null = null;
 
-// Sepia state
+// Filter states
 let sepiaEnabled = false;
+let invertEnabled = false;
+let sharpenEnabled = false;
 
 // RAF handle
 let rafId: number | null = null;
@@ -95,6 +97,14 @@ document.getElementById("btn-close")!.addEventListener("click", () => {
 
 document.getElementById("btn-sepia")!.addEventListener("click", () => {
   toggleSepia();
+});
+
+document.getElementById("btn-invert")!.addEventListener("click", () => {
+  toggleInvert();
+});
+
+document.getElementById("btn-sharpen")!.addEventListener("click", () => {
+  toggleSharpen();
 });
 
 document.getElementById("btn-fullscreen")!.addEventListener("click", () => {
@@ -309,20 +319,63 @@ function scheduleBrightnessHide() {
 
 // ── Sepia control ────────────────────────────────────────────────────────────
 
+function applyFilters() {
+  const canvasEl = document.getElementById("pdf-canvas") as HTMLCanvasElement;
+  const filters: string[] = [];
+
+  if (sepiaEnabled) {
+    filters.push("sepia(0.8) brightness(0.6) saturate(0.7)");
+  }
+  if (invertEnabled) {
+    filters.push("invert(1)");
+  }
+  if (sharpenEnabled) {
+    filters.push("url(#sharpen-filter)");
+  }
+
+  canvasEl.style.filter = filters.join(" ");
+}
+
 function toggleSepia() {
   sepiaEnabled = !sepiaEnabled;
   const btn = document.getElementById("btn-sepia")!;
-  const canvasEl = document.getElementById("pdf-canvas") as HTMLCanvasElement;
 
   if (sepiaEnabled) {
     btn.classList.add("active");
-    canvasEl.classList.add("sepia");
   } else {
     btn.classList.remove("active");
-    canvasEl.classList.remove("sepia");
   }
 
   localStorage.setItem("pidef-sepia", sepiaEnabled.toString());
+  applyFilters();
+}
+
+function toggleInvert() {
+  invertEnabled = !invertEnabled;
+  const btn = document.getElementById("btn-invert")!;
+
+  if (invertEnabled) {
+    btn.classList.add("active");
+  } else {
+    btn.classList.remove("active");
+  }
+
+  localStorage.setItem("pidef-invert", invertEnabled.toString());
+  applyFilters();
+}
+
+function toggleSharpen() {
+  sharpenEnabled = !sharpenEnabled;
+  const btn = document.getElementById("btn-sharpen")!;
+
+  if (sharpenEnabled) {
+    btn.classList.add("active");
+  } else {
+    btn.classList.remove("active");
+  }
+
+  localStorage.setItem("pidef-sharpen", sharpenEnabled.toString());
+  applyFilters();
 }
 
 // ── Drawing ──────────────────────────────────────────────────────────────────
@@ -763,8 +816,19 @@ applyBrightness();
 sepiaEnabled = localStorage.getItem("pidef-sepia") === "true";
 if (sepiaEnabled) {
   document.getElementById("btn-sepia")!.classList.add("active");
-  (document.getElementById("pdf-canvas") as HTMLCanvasElement).classList.add("sepia");
 }
+
+invertEnabled = localStorage.getItem("pidef-invert") === "true";
+if (invertEnabled) {
+  document.getElementById("btn-invert")!.classList.add("active");
+}
+
+sharpenEnabled = localStorage.getItem("pidef-sharpen") === "true";
+if (sharpenEnabled) {
+  document.getElementById("btn-sharpen")!.classList.add("active");
+}
+
+applyFilters();
 
 updateUI();
 resizeCanvas();

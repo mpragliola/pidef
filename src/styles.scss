@@ -189,7 +189,9 @@ button {
     justify-content: center;
   }
 
-  #btn-sepia {
+  #btn-sepia,
+  #btn-invert,
+  #btn-sharpen {
     font-size: $font-size-lg;
     padding: $spacing-lg $spacing-xl;
     min-height: $touch-target-lg;
@@ -230,9 +232,6 @@ button {
     touch-action: none;
     transition: filter $transition-normal;
 
-    &.sepia {
-      filter: sepia(0.8) brightness(0.6) saturate(0.7);
-    }
   }
 
   #welcome-screen {
