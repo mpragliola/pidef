@@ -70,6 +70,9 @@ let pointerStartY = 0;
 let brightnessAtDragStart = 1.0;
 let brightnessHideTimer: ReturnType<typeof setTimeout> | null = null;
 
+// Sepia state
+let sepiaEnabled = false;
+
 // RAF handle
 let rafId: number | null = null;
 
@@ -88,6 +91,10 @@ document.getElementById("btn-open")!.addEventListener("click", () => {
 
 document.getElementById("btn-close")!.addEventListener("click", () => {
   closePdf();
+});
+
+document.getElementById("btn-sepia")!.addEventListener("click", () => {
+  toggleSepia();
 });
 
 document.getElementById("btn-fullscreen")!.addEventListener("click", () => {
@@ -298,6 +305,24 @@ function updateBrightnessHud(visible: boolean) {
 function scheduleBrightnessHide() {
   if (brightnessHideTimer) clearTimeout(brightnessHideTimer);
   brightnessHideTimer = setTimeout(() => updateBrightnessHud(false), 1500);
+}
+
+// ── Sepia control ────────────────────────────────────────────────────────────
+
+function toggleSepia() {
+  sepiaEnabled = !sepiaEnabled;
+  const btn = document.getElementById("btn-sepia")!;
+  const canvasEl = document.getElementById("pdf-canvas") as HTMLCanvasElement;
+
+  if (sepiaEnabled) {
+    btn.classList.add("active");
+    canvasEl.classList.add("sepia");
+  } else {
+    btn.classList.remove("active");
+    canvasEl.classList.remove("sepia");
+  }
+
+  localStorage.setItem("pidef-sepia", sepiaEnabled.toString());
 }
 
 // ── Drawing ──────────────────────────────────────────────────────────────────
@@ -734,6 +759,12 @@ async function renderRecentFiles() {
 
 brightness = parseFloat(localStorage.getItem("pidef-brightness") ?? "1.0");
 applyBrightness();
+
+sepiaEnabled = localStorage.getItem("pidef-sepia") === "true";
+if (sepiaEnabled) {
+  document.getElementById("btn-sepia")!.classList.add("active");
+  (document.getElementById("pdf-canvas") as HTMLCanvasElement).classList.add("sepia");
+}
 
 updateUI();
 resizeCanvas();
