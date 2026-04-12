@@ -22,8 +22,8 @@ let pdfjsLib: typeof import("pdfjs-dist");
 
 // ── Tunables ─────────────────────────────────────────────────────────────────
 
-const ANIM_MS = 220;
-const SNAP_MS = 150;
+const ANIM_MS = 120;
+const SNAP_MS = 80;
 const THRESHOLD_PX = 40;
 const SLIDE_PX = 40;
 const PRERENDER_FWD = 2;
