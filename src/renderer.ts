@@ -1105,3 +1105,48 @@ applyFilters();
 updateUI();
 resizeCanvas();
 renderRecentFiles();
+
+// Modal event listeners
+const bookmarkModal = document.getElementById("bookmark-edit-modal")!;
+const bookmarkModalBackdrop = document.getElementById("bookmark-modal-backdrop")!;
+const bookmarkModalLabel = document.getElementById("bookmark-modal-label") as HTMLInputElement;
+const bookmarkModalDone = document.getElementById("bookmark-modal-done")!;
+const bookmarkModalCancel = document.getElementById("bookmark-modal-cancel")!;
+
+bookmarkModalDone.addEventListener("click", () => {
+  if (!currentEditingBookmark) return;
+
+  const newLabel = bookmarkModalLabel.value.trim();
+  if (!newLabel) return;
+
+  currentEditingBookmark.label = newLabel;
+  currentEditingBookmark.segue = (document.getElementById("bookmark-modal-segue") as HTMLInputElement).checked;
+
+  if (currentFilePath) {
+    pidef.writeBookmarks(currentFilePath, bookmarks);
+  }
+
+  closeBookmarkEditModal();
+  renderBookmarkBar();
+});
+
+bookmarkModalCancel.addEventListener("click", () => {
+  closeBookmarkEditModal();
+});
+
+bookmarkModalBackdrop.addEventListener("click", () => {
+  closeBookmarkEditModal();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !bookmarkModal.classList.contains("hidden")) {
+    closeBookmarkEditModal();
+  }
+});
+
+bookmarkModalLabel.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    bookmarkModalDone.click();
+  }
+});
