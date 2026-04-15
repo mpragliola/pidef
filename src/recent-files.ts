@@ -33,10 +33,7 @@ export function loadRecentFiles(dataDir: string): FileRecord[] {
 export function saveRecentFiles(files: FileRecord[], dataDir: string): void {
   try {
     const filePath = recentFilesPath(dataDir);
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
+    fs.mkdirSync(dataDir, { recursive: true });
     fs.writeFileSync(filePath, JSON.stringify(files, null, 2), "utf-8");
   } catch (err) {
     console.error("Failed to save recent files:", err);
@@ -45,8 +42,8 @@ export function saveRecentFiles(files: FileRecord[], dataDir: string): void {
 
 export function addRecentFile(
   filePath: string,
-  dataDir: string,
-  page: number = 0
+  page: number = 0,
+  dataDir: string
 ): void {
   let files = loadRecentFiles(dataDir);
   files = files.filter((f) => f.path !== filePath);
