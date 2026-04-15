@@ -2,6 +2,8 @@
 
 A minimal Electron PDF reader built for **touchscreen performance**. Designed specifically for musicians who need reliable, responsive page turning on stage or during practice without the bloat of general-purpose document readers.
 
+
+
 ## Why pidef?
 
 When performing music, you need instant page turns with zero lag. Existing Ubuntu PDF readers—whether desktop or mobile—introduce frustrating delays, imprecise touch targets, or hover-dependent interfaces that don't work with fingers. They're built for mouse-first workflows with touchscreen bolted on as an afterthought.
@@ -18,6 +20,8 @@ pidef flips that: it's **touch-first from the ground up**, optimized for Ubuntu 
 - **UI rotation** — Manually rotate the display 0°/90°/180°/270° via a toolbar button; works around Ubuntu laptops that handle automatic screen rotation poorly
 - **Keyboard fallback** — Arrow keys, Page Up/Down, and Space for alternative input
 - **Minimal codebase** — ~500 lines of TypeScript; easy to understand and modify
+
+![pidef showing sheet music in full UI](docs/image.png)
 
 ## Quick Start
 
