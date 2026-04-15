@@ -99,7 +99,8 @@ async function openFileDialog() {
 ipcMain.handle("open-file-dialog", openFileDialog);
 
 ipcMain.handle("get-recent-files", () => {
-  return loadRecentFiles(app.getPath("userData"));
+  const files = loadRecentFiles(app.getPath("userData"));
+  return files.filter((f) => fs.existsSync(f.path));
 });
 
 ipcMain.handle("add-recent-file", (_event, filePath: string, page?: number) => {

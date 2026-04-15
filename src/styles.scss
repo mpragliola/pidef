@@ -293,7 +293,8 @@ button {
       #recent-files-list {
         list-style: none;
         border-radius: $border-radius-md;
-        overflow: hidden;
+        overflow-y: auto;
+        max-height: 320px;
         border: $border-width solid var(--theme-border);
 
         li {
