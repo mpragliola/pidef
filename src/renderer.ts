@@ -53,7 +53,6 @@ let currentFilePath = "";
 // Bookmark state
 let bookmarks: Bookmark[] = [];
 let bookmarkBarVisible = false;
-let bookmarkEditMode = false;
 
 // Surface cache: page index -> ImageBitmap or OffscreenCanvas snapshot
 const surfCache = new Map<number, ImageBitmap>();
@@ -655,7 +654,6 @@ async function loadBookmarksForFile(filePath: string): Promise<void> {
 
 function clearBookmarks(): void {
   bookmarks = [];
-  bookmarkEditMode = false;
 }
 
 function renderBookmarkBar(): void {
@@ -664,7 +662,6 @@ function renderBookmarkBar(): void {
 
   const shouldShow = pdfDoc !== null && bookmarkBarVisible;
   bar.classList.toggle("hidden", !shouldShow);
-  bar.classList.toggle("edit-mode", bookmarkEditMode);
 
   pills.innerHTML = "";
 
@@ -678,21 +675,11 @@ function renderBookmarkBar(): void {
     if (bm.segue) labelSpan.textContent += " ▶";
     pill.appendChild(labelSpan);
 
-    const removeBtn = document.createElement("button");
-    removeBtn.className = "pill-remove";
-    removeBtn.textContent = "×";
-    removeBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      removeBookmark(bm.page);
-    });
-    pill.appendChild(removeBtn);
-
-    // Long-press (500ms) enters edit mode
+    // Long-press (500ms) opens edit modal
     let longPressTimer: ReturnType<typeof setTimeout> | null = null;
     const startLongPress = () => {
       longPressTimer = setTimeout(() => {
-        bookmarkEditMode = true;
-        renderBookmarkBar();
+        openBookmarkEditModal(bm);
       }, 500);
     };
     const cancelLongPress = () => {
@@ -704,7 +691,6 @@ function renderBookmarkBar(): void {
     pill.addEventListener("pointermove", cancelLongPress);
 
     pill.addEventListener("click", () => {
-      if (bookmarkEditMode) return;
       goToPage(bm.page);
     });
 
@@ -714,7 +700,6 @@ function renderBookmarkBar(): void {
 
 function removeBookmark(page: number): void {
   bookmarks = bookmarks.filter((b) => b.page !== page);
-  if (bookmarks.length === 0) bookmarkEditMode = false;
   if (currentFilePath) pidef.writeBookmarks(currentFilePath, bookmarks);
   renderBookmarkBar();
 }
@@ -1004,14 +989,6 @@ function doDragCancel() {
 
 // ── Keyboard ─────────────────────────────────────────────────────────────────
 
-document.addEventListener("pointerdown", (e) => {
-  if (!bookmarkEditMode) return;
-  const bar = document.getElementById("bookmark-bar")!;
-  if (!bar.contains(e.target as Node)) {
-    bookmarkEditMode = false;
-    renderBookmarkBar();
-  }
-});
 
 document.addEventListener("keydown", (e) => {
   switch (e.key) {
