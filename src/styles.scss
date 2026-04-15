@@ -8,6 +8,7 @@ $themes: (
     // Colors
     bg-primary: #212121,
     bg-secondary: #2a2a2a,
+    bg-tertiary: #343434,
     text-primary: #ddd,
     text-secondary: #8c8c8c,
     border: #3a3a3a,
@@ -19,6 +20,7 @@ $themes: (
     // Colors
     bg-primary: #f5f5f5,
     bg-secondary: #efefef,
+    bg-tertiary: #e8e8e8,
     text-primary: #212121,
     text-secondary: #666,
     border: #ddd,
@@ -37,6 +39,7 @@ $themes: (
 @mixin apply-theme($theme: 'dark') {
   --theme-bg-primary: #{theme-color(bg-primary, $theme)};
   --theme-bg-secondary: #{theme-color(bg-secondary, $theme)};
+  --theme-bg-tertiary: #{theme-color(bg-tertiary, $theme)};
   --theme-text-primary: #{theme-color(text-primary, $theme)};
   --theme-text-secondary: #{theme-color(text-secondary, $theme)};
   --theme-border: #{theme-color(border, $theme)};
@@ -78,6 +81,7 @@ $spacing-4xl: 40px;
 $border-width: 1px;
 $border-radius-sm: 4px;
 $border-radius-md: 8px;
+$border-radius-lg: 12px;
 
 // Touch Targets (minimum 44x44px, preferably 48x48px)
 $touch-target-min: 44px;
@@ -533,5 +537,132 @@ button {
     line-height: 1;
     min-height: unset;
     min-width: unset;
+  }
+}
+
+// ============================================================================
+// Bookmark Edit Modal
+// ============================================================================
+
+#bookmark-edit-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+
+  &.hidden {
+    display: none;
+  }
+
+  #bookmark-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  #bookmark-modal-content {
+    position: relative;
+    background: var(--theme-bg-primary);
+    border-radius: $border-radius-lg;
+    padding: $spacing-lg;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+
+    h2 {
+      margin: 0;
+      font-size: $font-size-lg;
+      color: var(--theme-text-primary);
+    }
+
+    #bookmark-modal-label {
+      width: 100%;
+      height: 44px;
+      padding: $spacing-md;
+      font-size: $font-size-base;
+      background: var(--theme-bg-secondary);
+      color: var(--theme-text-primary);
+      border: $border-width solid var(--theme-border);
+      border-radius: $border-radius-sm;
+      box-sizing: border-box;
+    }
+
+    #bookmark-segue-label {
+      display: flex;
+      align-items: center;
+      gap: $spacing-md;
+      cursor: pointer;
+      color: var(--theme-text-primary);
+      font-size: $font-size-sm;
+
+      input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+      }
+    }
+
+    #bookmark-modal-delete {
+      width: 100%;
+      padding: $spacing-md;
+      background: #cc3333;
+      color: white;
+      border: none;
+      border-radius: $border-radius-sm;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
+      cursor: pointer;
+
+      &:hover {
+        background: #aa2222;
+      }
+    }
+
+    #bookmark-modal-buttons {
+      display: flex;
+      gap: $spacing-md;
+      justify-content: flex-end;
+      margin-top: $spacing-sm;
+
+      button {
+        min-height: 44px;
+        padding: $spacing-md $spacing-lg;
+        font-size: $font-size-sm;
+        border: none;
+        border-radius: $border-radius-sm;
+        cursor: pointer;
+        font-weight: $font-weight-semibold;
+      }
+
+      #bookmark-modal-cancel {
+        background: var(--theme-bg-secondary);
+        color: var(--theme-text-primary);
+        border: $border-width solid var(--theme-border);
+
+        &:hover {
+          background: var(--theme-bg-tertiary, var(--theme-bg-secondary));
+        }
+      }
+
+      #bookmark-modal-done {
+        background: var(--theme-button-active);
+        color: white;
+
+        &:hover {
+          opacity: 0.9;
+        }
+      }
+    }
   }
 }
