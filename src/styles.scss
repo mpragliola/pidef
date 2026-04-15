@@ -238,6 +238,20 @@ button {
     align-items: center;
     justify-content: center;
   }
+
+  #btn-toggle-bookmarks {
+    font-size: $font-size-lg;
+    padding: $spacing-lg $spacing-xl;
+    min-height: $touch-target-lg;
+    min-width: $touch-target-lg;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.active {
+      background: var(--theme-button-active);
+    }
+  }
 }
 
 // ============================================================================
@@ -418,5 +432,106 @@ button {
     color: var(--theme-text-secondary);
     min-width: 110px;
     text-align: center;
+  }
+}
+
+// ============================================================================
+// BOOKMARK BAR
+// ============================================================================
+
+#bookmark-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-lg;
+  background: var(--theme-bg-secondary);
+  border-top: $border-width solid var(--theme-border);
+
+  &.hidden {
+    display: none;
+  }
+
+  &.edit-mode .bookmark-pill .pill-remove {
+    display: flex;
+  }
+
+  #bookmark-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-sm;
+    flex: 1;
+    align-items: center;
+  }
+
+  #btn-add-bookmark {
+    min-height: 32px;
+    min-width: 32px;
+    padding: $spacing-xs $spacing-md;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    flex-shrink: 0;
+  }
+
+  #bookmark-input-wrap {
+    display: flex;
+    gap: $spacing-xs;
+    align-items: center;
+    flex: 1;
+
+    input {
+      height: 32px;
+      padding: $spacing-xs $spacing-md;
+      font-size: $font-size-sm;
+      background: var(--theme-bg-primary);
+      color: var(--theme-text-primary);
+      border: $border-width solid var(--theme-border);
+      border-radius: $border-radius-sm;
+      min-width: 120px;
+    }
+
+    button {
+      min-height: 32px;
+      padding: $spacing-xs $spacing-md;
+      font-size: $font-size-sm;
+    }
+  }
+}
+
+.bookmark-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  padding: $spacing-xs $spacing-md;
+  font-size: $font-size-xs;
+  border-radius: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &.highlighted {
+    background: var(--theme-button-active);
+    border-color: var(--theme-text-secondary);
+  }
+
+  .pill-remove {
+    display: none;
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #cc3333;
+    color: white;
+    font-size: 10px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    line-height: 1;
+    min-height: unset;
+    min-width: unset;
   }
 }
