@@ -4,7 +4,7 @@ A minimal Electron PDF reader built for **touchscreen performance**. Designed sp
 
 ## Why pidef?
 
-When performing music, you need instant page turns with zero lag. Existing PDF readers—whether desktop or mobile—introduce frustrating delays, imprecise touch targets, or hover-dependent interfaces that don't work with fingers. They're built for mouse-first workflows with touchscreen bolted on as an afterthought.
+When performing music, you need instant page turns with zero lag. Existing Ubuntu PDF readers—whether desktop or mobile—introduce frustrating delays, imprecise touch targets, or hover-dependent interfaces that don't work with fingers. They're built for mouse-first workflows with touchscreen bolted on as an afterthought.
 
 pidef flips that: it's **touch-first from the ground up**, optimized for Ubuntu touchscreen laptops and tablets. If you're standing with a sheet music reader or lead sheets in hand, you need gestures that work reliably under pressure, buttons you can hit with a finger, and animations that feel responsive—not sluggish.
 
