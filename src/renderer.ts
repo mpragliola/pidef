@@ -678,6 +678,26 @@ function toVisualDx(dx: number, dy: number): number {
   }
 }
 
+// Map screen-space deltas to visual vertical delta (positive = down).
+function toVisualDy(dx: number, dy: number): number {
+  switch (rotationSteps) {
+    case 1: return -dx;  // 90° CW:  visual down = screen left
+    case 2: return -dy;  // 180°:    visual down = screen up
+    case 3: return dx;   // 270° CW: visual down = screen right
+    default: return dy;
+  }
+}
+
+// Returns true if the pointer is in the brightness-control zone (visual left edge strip).
+function isInBrightnessZone(clientX: number, clientY: number): boolean {
+  switch (rotationSteps) {
+    case 1: return clientY < BRIGHTNESS_ZONE_PX;                          // visual left = screen top
+    case 2: return clientX > (cacheWidth - BRIGHTNESS_ZONE_PX);           // visual left = screen right
+    case 3: return clientY > (cacheHeight - BRIGHTNESS_ZONE_PX);          // visual left = screen bottom
+    default: return clientX < BRIGHTNESS_ZONE_PX;                         // visual left = screen left
+  }
+}
+
 // Return the visual X fraction [0..1] of a pointer position for tap-zone checks.
 function visualXFrac(clientX: number, clientY: number): number {
   switch (rotationSteps) {
@@ -698,7 +718,7 @@ canvas.addEventListener("pointerdown", (e) => {
   pointerStartX = e.clientX;
   pointerStartY = e.clientY;
 
-  if (e.clientX < BRIGHTNESS_ZONE_PX) {
+  if (isInBrightnessZone(e.clientX, e.clientY)) {
     inBrightnessDrag = true;
     brightnessAtDragStart = brightness;
     if (brightnessHideTimer) clearTimeout(brightnessHideTimer);
@@ -717,9 +737,12 @@ canvas.addEventListener("pointerdown", (e) => {
 
 canvas.addEventListener("pointermove", (e) => {
   if (inBrightnessDrag) {
-    const dy = pointerStartY - e.clientY;
+    const screenDx = e.clientX - pointerStartX;
+    const screenDy = e.clientY - pointerStartY;
+    // Visual upward motion increases brightness; negate visualDy (positive=down) to get delta.
+    const delta = -toVisualDy(screenDx, screenDy);
     brightness = Math.max(BRIGHTNESS_MIN, Math.min(BRIGHTNESS_MAX,
-      brightnessAtDragStart + dy / BRIGHTNESS_PX_PER_UNIT));
+      brightnessAtDragStart + delta / BRIGHTNESS_PX_PER_UNIT));
     applyBrightness();
     updateBrightnessHud(true);
     return;
