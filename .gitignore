@@ -44,3 +44,6 @@ playwright-report/
 # Python (leftover from template)
 __pycache__
 *.pyc
+
+# Git worktrees
+.worktrees/
