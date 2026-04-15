@@ -6,6 +6,7 @@ interface FileRecord {
 interface Bookmark {
   label: string;
   page: number;
+  segue?: boolean; // optional, defaults to false
 }
 
 interface PidefAPI {
@@ -674,6 +675,7 @@ function renderBookmarkBar(): void {
 
     const labelSpan = document.createElement("span");
     labelSpan.textContent = bm.label;
+    if (bm.segue) labelSpan.textContent += " ▶";
     pill.appendChild(labelSpan);
 
     const removeBtn = document.createElement("button");
