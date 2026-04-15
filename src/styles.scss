@@ -456,10 +456,6 @@ button {
     display: none;
   }
 
-  &.edit-mode .bookmark-pill .pill-remove {
-    display: flex;
-  }
-
   #bookmark-pills {
     display: flex;
     flex-wrap: wrap;
@@ -518,26 +514,6 @@ button {
     border-color: var(--theme-text-secondary);
   }
 
-  .pill-remove {
-    display: none;
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #cc3333;
-    color: white;
-    font-size: 10px;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border: none;
-    padding: 0;
-    line-height: 1;
-    min-height: unset;
-    min-width: unset;
-  }
 }
 
 // ============================================================================
