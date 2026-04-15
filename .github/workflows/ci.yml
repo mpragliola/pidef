@@ -70,6 +70,6 @@ jobs:
             libxkbcommon0 \
             libgtk-3-0 \
             libxss1 \
-            libasound2
+            libasound2t64
       - name: Run E2E tests
         run: xvfb-run --auto-servernum npm run test:e2e
