@@ -15,6 +15,7 @@ pidef flips that: it's **touch-first from the ground up**, optimized for Ubuntu 
 - **Full-screen mode** — Maximize reading area with one tap; minimize UI clutter during performance
 - **Smooth 220ms animations** — Page transitions feel responsive without motion fatigue over long practice sessions
 - **Responsive feedback** — Visual snap-back (150ms) when you almost swipe a page; no hover states
+- **UI rotation** — Manually rotate the display 0°/90°/180°/270° via a toolbar button; works around Ubuntu laptops that handle automatic screen rotation poorly
 - **Keyboard fallback** — Arrow keys, Page Up/Down, and Space for alternative input
 - **Minimal codebase** — ~500 lines of TypeScript; easy to understand and modify
 
@@ -43,6 +44,7 @@ Or use **Ctrl+O** to open a file dialog inside the app.
 | F11 or tap fullscreen button | Toggle fullscreen |
 | Escape | Exit fullscreen |
 | Ctrl+O | Open file dialog |
+| Rotate button (toolbar) | Cycle display rotation: 0° → 90° → 180° → 270° |
 
 ## Use Case: Sheet Music & Lead Sheets
 
@@ -51,6 +53,7 @@ pidef is ideal for:
 - **Practice sessions** — Swipe through charts without reaching for a mouse or clicking small buttons
 - **Touchscreen laptops** — Optimized for Ubuntu devices with touch input; works great on tablets too
 - **Lead sheets and chord charts** — Fast, responsive navigation keeps you focused on playing
+- **Portrait/landscape flexibility** — Manually rotate the UI when your device's auto-rotation misbehaves (common on some Ubuntu laptops)
 
 ## System Requirements
 
