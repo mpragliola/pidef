@@ -667,6 +667,27 @@ async function loadFile(filePath: string) {
 
 // ── Drag handling (pointer events) ───────────────────────────────────────────
 
+// Map screen-space deltas to visual (post-rotation) horizontal delta.
+// rotationSteps: 0=0°, 1=90°CW, 2=180°, 3=270°CW
+function toVisualDx(dx: number, dy: number): number {
+  switch (rotationSteps) {
+    case 1: return dy;   // 90° CW:  visual right = screen down
+    case 2: return -dx;  // 180°:    visual right = screen left
+    case 3: return -dy;  // 270° CW: visual right = screen up
+    default: return dx;
+  }
+}
+
+// Return the visual X fraction [0..1] of a pointer position for tap-zone checks.
+function visualXFrac(clientX: number, clientY: number): number {
+  switch (rotationSteps) {
+    case 1: return clientY / cacheWidth;
+    case 2: return (cacheWidth - clientX) / cacheWidth;
+    case 3: return (cacheWidth - clientY) / cacheWidth;
+    default: return clientX / cacheWidth;
+  }
+}
+
 let pointerDown = false;
 let pointerStartX = 0;
 
@@ -705,7 +726,7 @@ canvas.addEventListener("pointermove", (e) => {
   }
 
   if (!pointerDown || state !== "dragging" || dragCommitted) return;
-  const dx = e.clientX - pointerStartX;
+  const dx = toVisualDx(e.clientX - pointerStartX, e.clientY - pointerStartY);
   dragX = dx;
   if (dx < -5) dragAdjDir = 1;
   else if (dx > 5) dragAdjDir = -1;
@@ -748,9 +769,9 @@ canvas.addEventListener("pointerup", (e) => {
   }
 
   if (!dragCommitted) {
-    const moved = Math.abs(e.clientX - pointerStartX);
+    const moved = Math.abs(toVisualDx(e.clientX - pointerStartX, e.clientY - pointerStartY));
     if (moved < TAP_MAX_MOVE) {
-      const xFrac = pointerStartX / cacheWidth;
+      const xFrac = visualXFrac(pointerStartX, pointerStartY);
       if (xFrac < TAP_ZONE) {
         cancelAll();
         goPrev();
