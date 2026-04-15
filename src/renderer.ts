@@ -3,6 +3,11 @@ interface FileRecord {
   page: number;
 }
 
+interface Bookmark {
+  label: string;
+  page: number;
+}
+
 interface PidefAPI {
   openFileDialog: () => Promise<void>;
   toggleFullscreen: () => Promise<void>;
@@ -11,6 +16,8 @@ interface PidefAPI {
   getRecentFiles: () => Promise<FileRecord[]>;
   addRecentFile: (path: string, page?: number) => Promise<void>;
   updateFilePage: (path: string, page: number) => Promise<void>;
+  readBookmarks: (pdfPath: string) => Promise<Bookmark[]>;
+  writeBookmarks: (pdfPath: string, bookmarks: Bookmark[]) => Promise<void>;
   onOpenFile: (cb: (path: string) => void) => void;
   onToggleFullscreen: (cb: () => void) => void;
 }
@@ -41,6 +48,11 @@ let pdfDoc: import("pdfjs-dist").PDFDocumentProxy | null = null;
 let currentPage = 0;
 let nPages = 0;
 let currentFilePath = "";
+
+// Bookmark state
+let bookmarks: Bookmark[] = [];
+let bookmarkBarVisible = false;
+let bookmarkEditMode = false;
 
 // Surface cache: page index -> ImageBitmap or OffscreenCanvas snapshot
 const surfCache = new Map<number, ImageBitmap>();
@@ -595,6 +607,7 @@ async function closePdf() {
   animFromSurf = null;
   surfCache.clear();
   rendering.clear();
+  clearBookmarks();
   updateUI();
   draw();
 }
@@ -618,6 +631,15 @@ function updateUI() {
 }
 
 // ── File loading ─────────────────────────────────────────────────────────────
+
+async function loadBookmarksForFile(filePath: string): Promise<void> {
+  bookmarks = await pidef.readBookmarks(filePath);
+}
+
+function clearBookmarks(): void {
+  bookmarks = [];
+  bookmarkEditMode = false;
+}
 
 async function loadFile(filePath: string) {
   console.log(`[pidef] load: ${filePath}`);
@@ -660,6 +682,8 @@ async function loadFile(filePath: string) {
 
   // Add to recent files with current page
   await pidef.addRecentFile(filePath, currentPage);
+
+  await loadBookmarksForFile(filePath);
 
   updateUI();
   draw();
@@ -928,6 +952,11 @@ if (sharpenEnabled) {
 
 rotationSteps = parseInt(localStorage.getItem("pidef-rotation") ?? "0", 10);
 applyUiRotation();
+
+bookmarkBarVisible = localStorage.getItem("pidef-bookmarks-visible") === "true";
+if (bookmarkBarVisible) {
+  document.getElementById("btn-toggle-bookmarks")!.classList.add("active");
+}
 
 applyFilters();
 
