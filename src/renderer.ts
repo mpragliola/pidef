@@ -75,6 +75,9 @@ let sepiaEnabled = false;
 let invertEnabled = false;
 let sharpenEnabled = false;
 
+// Rotation state (0=0°, 1=90°, 2=180°, 3=270°)
+let rotationSteps = 0;
+
 // RAF handle
 let rafId: number | null = null;
 
@@ -105,6 +108,10 @@ document.getElementById("btn-invert")!.addEventListener("click", () => {
 
 document.getElementById("btn-sharpen")!.addEventListener("click", () => {
   toggleSharpen();
+});
+
+document.getElementById("btn-rotate")!.addEventListener("click", () => {
+  cycleRotate();
 });
 
 document.getElementById("btn-fullscreen")!.addEventListener("click", () => {
@@ -380,6 +387,38 @@ function toggleSharpen() {
 
   localStorage.setItem("pidef-sharpen", sharpenEnabled.toString());
   applyFilters();
+}
+
+function applyUiRotation() {
+  document.body.classList.remove("rotate-90", "rotate-180", "rotate-270");
+  if (rotationSteps === 1) document.body.classList.add("rotate-90");
+  else if (rotationSteps === 2) document.body.classList.add("rotate-180");
+  else if (rotationSteps === 3) document.body.classList.add("rotate-270");
+
+  const btn = document.getElementById("btn-rotate")!;
+  if (rotationSteps > 0) {
+    btn.classList.add("active");
+  } else {
+    btn.classList.remove("active");
+  }
+}
+
+function cycleRotate() {
+  rotationSteps = (rotationSteps + 1) % 4;
+  localStorage.setItem("pidef-rotation", rotationSteps.toString());
+  applyUiRotation();
+  // For 90°/270° the body dimensions swap, ResizeObserver fires and re-renders.
+  // For 180° dimensions stay the same; force a cache flush and redraw manually.
+  if (rotationSteps === 2 || rotationSteps === 0) {
+    surfCache.clear();
+    rendering.clear();
+    currentSurf = null;
+    if (pdfDoc && cacheWidth > 0 && cacheHeight > 0) {
+      renderPageCached(currentPage).then((bmp) => {
+        if (bmp) { currentSurf = bmp; draw(); bgScan(); }
+      });
+    }
+  }
 }
 
 // ── Drawing ──────────────────────────────────────────────────────────────────
@@ -842,6 +881,9 @@ sharpenEnabled = localStorage.getItem("pidef-sharpen") === "true";
 if (sharpenEnabled) {
   document.getElementById("btn-sharpen")!.classList.add("active");
 }
+
+rotationSteps = parseInt(localStorage.getItem("pidef-rotation") ?? "0", 10);
+applyUiRotation();
 
 applyFilters();
 

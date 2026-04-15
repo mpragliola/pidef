@@ -127,6 +127,29 @@ body {
   user-select: none;
 }
 
+// UI rotation — rotates the whole app to support laptops that can't rotate their OS display
+body.rotate-90 {
+  position: fixed;
+  width: 100vh;
+  height: 100vw;
+  top: calc((100vh - 100vw) / 2);
+  left: calc((100vw - 100vh) / 2);
+  transform: rotate(90deg);
+}
+
+body.rotate-180 {
+  transform: rotate(180deg);
+}
+
+body.rotate-270 {
+  position: fixed;
+  width: 100vh;
+  height: 100vw;
+  top: calc((100vh - 100vw) / 2);
+  left: calc((100vw - 100vh) / 2);
+  transform: rotate(270deg);
+}
+
 button {
   background: var(--theme-button-bg);
   color: var(--theme-text-primary);
@@ -191,7 +214,8 @@ button {
 
   #btn-sepia,
   #btn-invert,
-  #btn-sharpen {
+  #btn-sharpen,
+  #btn-rotate {
     font-size: $font-size-lg;
     padding: $spacing-lg $spacing-xl;
     min-height: $touch-target-lg;
