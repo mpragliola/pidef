@@ -6,14 +6,20 @@
   "scripts": {
     "build": "tsc && sass src/styles.scss dist/styles.css && cp src/index.html dist/index.html",
     "start": "npm run build && electron dist/main.js",
-    "dev": "npm run build && electron dist/main.js"
+    "dev": "npm run build && electron dist/main.js",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "electron": "^35.0.0",
     "pdfjs-dist": "^3.11.174"
   },
   "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "pdf-lib": "^1.17.1",
     "sass": "^1.87.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^2.0.0"
   }
 }
