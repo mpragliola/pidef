@@ -5,6 +5,11 @@ interface FileRecord {
   page: number;
 }
 
+interface Bookmark {
+  label: string;
+  page: number;
+}
+
 interface PidefAPI {
   openFileDialog: () => Promise<void>;
   toggleFullscreen: () => Promise<void>;
@@ -13,6 +18,8 @@ interface PidefAPI {
   getRecentFiles: () => Promise<FileRecord[]>;
   addRecentFile: (path: string, page?: number) => Promise<void>;
   updateFilePage: (path: string, page: number) => Promise<void>;
+  readBookmarks: (pdfPath: string) => Promise<Bookmark[]>;
+  writeBookmarks: (pdfPath: string, bookmarks: Bookmark[]) => Promise<void>;
   onOpenFile: (cb: (path: string) => void) => void;
   onToggleFullscreen: (cb: () => void) => void;
 }
@@ -25,6 +32,8 @@ interface PidefAPI {
   getRecentFiles: () => ipcRenderer.invoke("get-recent-files"),
   addRecentFile: (path: string, page?: number) => ipcRenderer.invoke("add-recent-file", path, page),
   updateFilePage: (path: string, page: number) => ipcRenderer.invoke("update-file-page", path, page),
+  readBookmarks: (pdfPath: string) => ipcRenderer.invoke("read-bookmarks", pdfPath),
+  writeBookmarks: (pdfPath: string, bookmarks: Bookmark[]) => ipcRenderer.invoke("write-bookmarks", pdfPath, bookmarks),
   onOpenFile: (cb: (path: string) => void) => {
     ipcRenderer.on("open-file", (_e, path) => cb(path));
   },

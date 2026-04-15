@@ -7,6 +7,7 @@ import {
   addRecentFile,
   updateFilePage,
 } from "./recent-files";
+import { readBookmarks, writeBookmarks, Bookmark } from "./bookmarks";
 
 // Debug logging to file
 const debugLogFile = "/tmp/pidef-brightness-debug.log";
@@ -150,6 +151,14 @@ ipcMain.handle("set-brightness", (_event, level: number) => {
       }
     });
   });
+});
+
+ipcMain.handle("read-bookmarks", (_event, pdfPath: string): Bookmark[] => {
+  return readBookmarks(pdfPath);
+});
+
+ipcMain.handle("write-bookmarks", (_event, pdfPath: string, bookmarks: Bookmark[]): void => {
+  writeBookmarks(pdfPath, bookmarks);
 });
 
 app.whenReady().then(() => {
