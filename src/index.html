@@ -46,6 +46,23 @@
     <button id="btn-add-bookmark" title="Add bookmark for current page">+</button>
   </div>
 
+  <div id="bookmark-edit-modal" class="hidden">
+    <div id="bookmark-modal-backdrop"></div>
+    <div id="bookmark-modal-content">
+      <h2>Edit Bookmark</h2>
+      <input type="text" id="bookmark-modal-label" placeholder="Bookmark label">
+      <label id="bookmark-segue-label">
+        <input type="checkbox" id="bookmark-modal-segue">
+        Mark as segue
+      </label>
+      <button id="bookmark-modal-delete" class="destructive">Delete</button>
+      <div id="bookmark-modal-buttons">
+        <button id="bookmark-modal-cancel">Cancel</button>
+        <button id="bookmark-modal-done">Done</button>
+      </div>
+    </div>
+  </div>
+
   <div id="nav-bar">
     <button id="btn-first" title="First page">⏮</button>
     <button id="btn-prev" title="Previous page">◀  Prev</button>
