@@ -711,6 +711,29 @@ function addBookmark(label: string, page: number): void {
   renderBookmarkBar();
 }
 
+let currentEditingBookmark: Bookmark | null = null;
+
+function openBookmarkEditModal(bm: Bookmark): void {
+  currentEditingBookmark = bm;
+
+  const modal = document.getElementById("bookmark-edit-modal")!;
+  const labelInput = document.getElementById("bookmark-modal-label") as HTMLInputElement;
+  const segueCheckbox = document.getElementById("bookmark-modal-segue") as HTMLInputElement;
+
+  labelInput.value = bm.label;
+  segueCheckbox.checked = bm.segue ?? false;
+
+  modal.classList.remove("hidden");
+  labelInput.focus();
+  labelInput.select();
+}
+
+function closeBookmarkEditModal(): void {
+  const modal = document.getElementById("bookmark-edit-modal")!;
+  modal.classList.add("hidden");
+  currentEditingBookmark = null;
+}
+
 function showBookmarkInput(): void {
   const bar = document.getElementById("bookmark-bar")!;
   const addBtn = document.getElementById("btn-add-bookmark")!;
