@@ -130,6 +130,20 @@ document.getElementById("btn-fullscreen")!.addEventListener("click", () => {
   pidef.toggleFullscreen();
 });
 
+document.getElementById("btn-toggle-bookmarks")!.addEventListener("click", () => {
+  bookmarkBarVisible = !bookmarkBarVisible;
+  localStorage.setItem("pidef-bookmarks-visible", bookmarkBarVisible.toString());
+  document.getElementById("btn-toggle-bookmarks")!.classList.toggle("active", bookmarkBarVisible);
+  renderBookmarkBar();
+});
+
+document.getElementById("btn-add-bookmark")!.addEventListener("click", () => {
+  if (!pdfDoc) return;
+  const existing = bookmarks.find((b) => b.page === currentPage);
+  if (existing) return; // pill already highlighted
+  showBookmarkInput();
+});
+
 document.getElementById("btn-first")!.addEventListener("click", () => {
   goFirst();
 });
@@ -169,6 +183,7 @@ pageSlider.addEventListener("input", (e) => {
     // Update labels only, not slider (to avoid janky reset)
     pageLabel.textContent = `Page ${currentPage + 1} / ${nPages}`;
     navLabel.textContent = `Page ${currentPage + 1} / ${nPages}`;
+    renderBookmarkBar();
     if (currentFilePath && pdfDoc) {
       pidef.updateFilePage(currentFilePath, currentPage);
     }
@@ -628,6 +643,7 @@ function updateUI() {
     pageSlider.value = "0";
     welcomeScreen.style.display = "";
   }
+  renderBookmarkBar();
 }
 
 // ── File loading ─────────────────────────────────────────────────────────────
@@ -639,6 +655,121 @@ async function loadBookmarksForFile(filePath: string): Promise<void> {
 function clearBookmarks(): void {
   bookmarks = [];
   bookmarkEditMode = false;
+}
+
+function renderBookmarkBar(): void {
+  const bar = document.getElementById("bookmark-bar")!;
+  const pills = document.getElementById("bookmark-pills")!;
+
+  const shouldShow = pdfDoc !== null && bookmarkBarVisible;
+  bar.classList.toggle("hidden", !shouldShow);
+  bar.classList.toggle("edit-mode", bookmarkEditMode);
+
+  pills.innerHTML = "";
+
+  for (const bm of bookmarks) {
+    const pill = document.createElement("button");
+    pill.className = "bookmark-pill";
+    if (bm.page === currentPage) pill.classList.add("highlighted");
+
+    const labelSpan = document.createElement("span");
+    labelSpan.textContent = bm.label;
+    pill.appendChild(labelSpan);
+
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "pill-remove";
+    removeBtn.textContent = "×";
+    removeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      removeBookmark(bm.page);
+    });
+    pill.appendChild(removeBtn);
+
+    // Long-press (500ms) enters edit mode
+    let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+    const startLongPress = () => {
+      longPressTimer = setTimeout(() => {
+        bookmarkEditMode = true;
+        renderBookmarkBar();
+      }, 500);
+    };
+    const cancelLongPress = () => {
+      if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+    };
+    pill.addEventListener("pointerdown", startLongPress);
+    pill.addEventListener("pointerup", cancelLongPress);
+    pill.addEventListener("pointercancel", cancelLongPress);
+    pill.addEventListener("pointermove", cancelLongPress);
+
+    pill.addEventListener("click", () => {
+      if (bookmarkEditMode) return;
+      goToPage(bm.page);
+    });
+
+    pills.appendChild(pill);
+  }
+}
+
+function removeBookmark(page: number): void {
+  bookmarks = bookmarks.filter((b) => b.page !== page);
+  if (bookmarks.length === 0) bookmarkEditMode = false;
+  if (currentFilePath) pidef.writeBookmarks(currentFilePath, bookmarks);
+  renderBookmarkBar();
+}
+
+function addBookmark(label: string, page: number): void {
+  bookmarks = [...bookmarks.filter((b) => b.page !== page), { label, page }]
+    .sort((a, b) => a.page - b.page);
+  if (currentFilePath) pidef.writeBookmarks(currentFilePath, bookmarks);
+  renderBookmarkBar();
+}
+
+function showBookmarkInput(): void {
+  const bar = document.getElementById("bookmark-bar")!;
+  const addBtn = document.getElementById("btn-add-bookmark")!;
+  addBtn.style.display = "none";
+
+  const wrap = document.createElement("div");
+  wrap.id = "bookmark-input-wrap";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = `p.${currentPage + 1}`;
+
+  const confirmBtn = document.createElement("button");
+  confirmBtn.textContent = "✓";
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "✕";
+
+  wrap.appendChild(input);
+  wrap.appendChild(confirmBtn);
+  wrap.appendChild(cancelBtn);
+  bar.appendChild(wrap);
+
+  input.focus();
+  input.select();
+
+  let closed = false;
+  function closeInput() {
+    if (closed) return;
+    closed = true;
+    wrap.remove();
+    addBtn.style.display = "";
+  }
+  function confirm() {
+    const label = input.value.trim();
+    if (label) addBookmark(label, currentPage);
+    closeInput();
+  }
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); confirm(); }
+    if (e.key === "Escape") closeInput();
+  });
+  confirmBtn.addEventListener("click", confirm);
+  cancelBtn.addEventListener("click", closeInput);
+  input.addEventListener("blur", () => setTimeout(closeInput, 150));
 }
 
 async function loadFile(filePath: string) {
@@ -870,6 +1001,15 @@ function doDragCancel() {
 }
 
 // ── Keyboard ─────────────────────────────────────────────────────────────────
+
+document.addEventListener("pointerdown", (e) => {
+  if (!bookmarkEditMode) return;
+  const bar = document.getElementById("bookmark-bar")!;
+  if (!bar.contains(e.target as Node)) {
+    bookmarkEditMode = false;
+    renderBookmarkBar();
+  }
+});
 
 document.addEventListener("keydown", (e) => {
   switch (e.key) {
