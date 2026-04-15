@@ -2,6 +2,11 @@ import { app, BrowserWindow, dialog, ipcMain, Menu } from "electron";
 import * as path from "path";
 import * as fs from "fs";
 import { exec } from "child_process";
+import {
+  loadRecentFiles,
+  addRecentFile,
+  updateFilePage,
+} from "./recent-files";
 
 // Debug logging to file
 const debugLogFile = "/tmp/pidef-brightness-debug.log";
@@ -18,8 +23,6 @@ function debugLog(msg: string) {
 
 let mainWindow: BrowserWindow | null = null;
 
-const RECENT_FILES_MAX = 10;
-
 // Check brightnessctl is available at startup
 exec("which brightnessctl", (err) => {
   if (!err) {
@@ -28,67 +31,6 @@ exec("which brightnessctl", (err) => {
     debugLog("WARNING: brightnessctl not found. Install with: sudo apt install brightnessctl");
   }
 });
-
-interface FileRecord {
-  path: string;
-  page: number;
-}
-
-function getRecentFilesPath(): string {
-  return path.join(app.getPath("userData"), "recent-files.json");
-}
-
-function loadRecentFiles(): FileRecord[] {
-  try {
-    const filePath = getRecentFilesPath();
-    if (fs.existsSync(filePath)) {
-      const data = fs.readFileSync(filePath, "utf-8");
-      const files = JSON.parse(data);
-      // Handle both old (string[]) and new (FileRecord[]) formats
-      if (Array.isArray(files)) {
-        return files.map((f) =>
-          typeof f === "string" ? { path: f, page: 0 } : f
-        );
-      }
-    }
-  } catch (err) {
-    console.error("Failed to load recent files:", err);
-  }
-  return [];
-}
-
-function saveRecentFiles(files: FileRecord[]): void {
-  try {
-    const filePath = getRecentFilesPath();
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(filePath, JSON.stringify(files, null, 2), "utf-8");
-  } catch (err) {
-    console.error("Failed to save recent files:", err);
-  }
-}
-
-function addRecentFile(filePath: string, page: number = 0): void {
-  let files = loadRecentFiles();
-  // Remove if already present
-  files = files.filter((f) => f.path !== filePath);
-  // Add to front
-  files.unshift({ path: filePath, page });
-  // Keep only the most recent N
-  files = files.slice(0, RECENT_FILES_MAX);
-  saveRecentFiles(files);
-}
-
-function updateFilePage(filePath: string, page: number): void {
-  let files = loadRecentFiles();
-  const file = files.find((f) => f.path === filePath);
-  if (file) {
-    file.page = page;
-    saveRecentFiles(files);
-  }
-}
 
 function createWindow(filePath?: string) {
   mainWindow = new BrowserWindow({
@@ -149,7 +91,7 @@ async function openFileDialog() {
   });
   if (!result.canceled && result.filePaths.length > 0) {
     const filePath = result.filePaths[0];
-    addRecentFile(filePath);
+    addRecentFile(filePath, 0, app.getPath("userData"));
     mainWindow.webContents.send("open-file", filePath);
   }
 }
@@ -157,15 +99,15 @@ async function openFileDialog() {
 ipcMain.handle("open-file-dialog", openFileDialog);
 
 ipcMain.handle("get-recent-files", () => {
-  return loadRecentFiles();
+  return loadRecentFiles(app.getPath("userData"));
 });
 
 ipcMain.handle("add-recent-file", (_event, filePath: string, page?: number) => {
-  addRecentFile(filePath, page ?? 0);
+  addRecentFile(filePath, page ?? 0, app.getPath("userData"));
 });
 
 ipcMain.handle("update-file-page", (_event, filePath: string, page: number) => {
-  updateFilePage(filePath, page);
+  updateFilePage(filePath, page, app.getPath("userData"));
 });
 
 ipcMain.handle("toggle-fullscreen", () => {
