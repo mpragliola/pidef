@@ -36,6 +36,11 @@ build/
 coverage/
 .nyc_output/
 
+# Playwright
+test-results/
+playwright-report/
+.last-run.json
+
 # Python (leftover from template)
 __pycache__
 *.pyc
