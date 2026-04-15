@@ -1130,6 +1130,25 @@ bookmarkModalDone.addEventListener("click", () => {
   renderBookmarkBar();
 });
 
+const bookmarkModalDelete = document.getElementById("bookmark-modal-delete")!;
+
+bookmarkModalDelete.addEventListener("click", () => {
+  if (!currentEditingBookmark) return;
+
+  const confirmed = confirm(`Delete bookmark "${currentEditingBookmark.label}"?`);
+  if (!confirmed) return;
+
+  const pageToRemove = currentEditingBookmark.page;
+  bookmarks = bookmarks.filter((b) => b.page !== pageToRemove);
+
+  if (currentFilePath) {
+    pidef.writeBookmarks(currentFilePath, bookmarks);
+  }
+
+  closeBookmarkEditModal();
+  renderBookmarkBar();
+});
+
 bookmarkModalCancel.addEventListener("click", () => {
   closeBookmarkEditModal();
 });
