@@ -933,11 +933,7 @@ function renderBookmarkBar(): void {
 
     // Add segue arrow if applicable
     if (bm.segue) {
-      if (pill.textContent) {
-        pill.textContent += ' ▶';
-      } else {
-        pill.innerHTML += ' ▶';
-      }
+      pill.innerHTML += ' ▶';
     }
 
     // Double-tap to edit: first tap arms the pill, second tap opens edit modal.
@@ -1034,11 +1030,7 @@ function renderBookmarkOverlay(): void {
 
     // Add segue arrow
     if (bm.segue) {
-      if (pill.textContent) {
-        pill.textContent += ' ▶';
-      } else {
-        pill.innerHTML += ' ▶';
-      }
+      pill.innerHTML += ' ▶';
     }
 
     // Click handler - jump to page and close overlay
