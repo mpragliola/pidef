@@ -705,7 +705,7 @@ button {
     padding: $spacing-lg;
     overflow-y: auto;
     overflow-x: hidden;
-    touch-action: none;
+    touch-action: pan-y;
     background: var(--theme-bg-primary);
     border-left: 2px solid var(--theme-border);
     z-index: 1000;
