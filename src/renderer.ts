@@ -263,12 +263,10 @@ if (overlay) {
 }
 
 
-// ── 1-line bookmark bar manual scroll (rotation-aware) ───────────────────────
+// ── 1-line bookmark bar manual scroll (rotation-aware, with inertia) ─────────
 // Native overflow-x scroll doesn't work when the body is CSS-rotated 90°/270°
 // because the browser resolves gestures in screen space, not transformed space.
 // We drive scrollLeft manually using toVisualDx() which maps screen→visual coords.
-// No setPointerCapture — that was causing scroll-on-release. We just track the
-// active pointer id and follow its events as they bubble up from pill children.
 {
   const pills = document.getElementById("bookmark-pills")!;
   let activePointerId: number | null = null;
@@ -278,14 +276,44 @@ if (overlay) {
   let pillsDragCommitted = false;
   const PILLS_DRAG_THRESHOLD = 8;
 
+  // Inertia state
+  let inertiaRaf: number | null = null;
+  let inertiaVelocity = 0;       // px/ms, positive = scrolling right (scrollLeft increasing)
+  let lastMoveTime = 0;
+  let lastVdx = 0;
+  const FRICTION = 0.92;         // velocity multiplied each frame
+  const MIN_VELOCITY = 0.05;     // stop below this px/ms
+
+  function stopInertia() {
+    if (inertiaRaf !== null) { cancelAnimationFrame(inertiaRaf); inertiaRaf = null; }
+    inertiaVelocity = 0;
+  }
+
+  function tickInertia(prevTime: number) {
+    inertiaRaf = requestAnimationFrame((now) => {
+      const dt = now - prevTime;
+      inertiaVelocity *= FRICTION;
+      if (Math.abs(inertiaVelocity) < MIN_VELOCITY) {
+        inertiaRaf = null;
+        return;
+      }
+      pills.scrollLeft += inertiaVelocity * dt;
+      tickInertia(now);
+    });
+  }
+
   pills.addEventListener("pointerdown", (e) => {
     if (bookmarkDisplayMode !== '1-line') return;
+    stopInertia();
     activePointerId = e.pointerId;
     pillsDragCommitted = false;
     pillsStartX = e.clientX;
     pillsStartY = e.clientY;
     pills.scrollLeft = pills.scrollLeft; // cancel any in-progress smooth scroll
     pillsStartScrollLeft = pills.scrollLeft;
+    lastMoveTime = e.timeStamp;
+    lastVdx = 0;
+    inertiaVelocity = 0;
   });
 
   pills.addEventListener("pointermove", (e) => {
@@ -295,13 +323,25 @@ if (overlay) {
       pillsDragCommitted = true;
     }
     if (pillsDragCommitted) {
-      pills.scrollLeft = pillsStartScrollLeft - vdx;
+      const newScrollLeft = pillsStartScrollLeft - vdx;
+      const dt = e.timeStamp - lastMoveTime;
+      if (dt > 0) {
+        // velocity in px/ms; positive = scrollLeft increasing
+        inertiaVelocity = -(vdx - lastVdx) / dt;
+      }
+      lastVdx = vdx;
+      lastMoveTime = e.timeStamp;
+      pills.scrollLeft = newScrollLeft;
       e.stopPropagation();
     }
   });
 
   const endDrag = (e: PointerEvent) => {
-    if (e.pointerId === activePointerId) activePointerId = null;
+    if (e.pointerId !== activePointerId) return;
+    activePointerId = null;
+    if (pillsDragCommitted && Math.abs(inertiaVelocity) > MIN_VELOCITY) {
+      tickInertia(e.timeStamp);
+    }
   };
   pills.addEventListener("pointerup", endDrag);
   pills.addEventListener("pointercancel", endDrag);
