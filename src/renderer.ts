@@ -115,6 +115,7 @@ document.getElementById("btn-open")!.addEventListener("click", () => {
 });
 
 document.getElementById("btn-close")!.addEventListener("click", () => {
+  if (!pdfDoc) return;
   closePdf();
 });
 
@@ -160,6 +161,7 @@ document.getElementById("btn-rotate-ccw")!.addEventListener("click", () => {
 });
 
 document.getElementById("btn-fullscreen")!.addEventListener("click", () => {
+  if (!pdfDoc) return;
   pidef.toggleFullscreen();
 });
 
@@ -183,6 +185,7 @@ if (bookmarksNavButton) {
 
   // Long-press: enter overlay mode
   bookmarksNavButton.addEventListener("pointerdown", () => {
+    if (!pdfDoc) return;
     bookmarkButtonLongPressTimer = setTimeout(() => {
       if (bookmarkDisplayMode !== 'overlay') {
         overlayActiveFromMode = bookmarkDisplayMode;
@@ -211,6 +214,7 @@ if (bookmarksNavButton) {
 const widthControlBtn = document.getElementById("btn-width-control");
 if (widthControlBtn) {
   widthControlBtn.addEventListener("click", () => {
+    if (!pdfDoc) return;
     const modes: ('s' | 'm' | 'l')[] = ['s', 'm', 'l'];
     const currentIndex = modes.indexOf(bookmarkWidthMode);
     bookmarkWidthMode = modes[(currentIndex + 1) % modes.length];
@@ -224,6 +228,7 @@ if (widthControlBtn) {
 const titleToggleBtn = document.getElementById("btn-title-toggle");
 if (titleToggleBtn) {
   titleToggleBtn.addEventListener("click", () => {
+    if (!pdfDoc) return;
     showTopBarTitle = !showTopBarTitle;
     localStorage.setItem("pidef-show-top-bar-title", showTopBarTitle.toString());
     renderTopBar();
@@ -1325,16 +1330,19 @@ document.addEventListener("keydown", (e) => {
     case "ArrowRight":
     case "PageDown":
     case " ":
+      if (!pdfDoc) break;
       e.preventDefault();
       goNext();
       break;
     case "ArrowLeft":
     case "PageUp":
     case "Backspace":
+      if (!pdfDoc) break;
       e.preventDefault();
       goPrev();
       break;
     case "F11":
+      if (!pdfDoc) break;
       e.preventDefault();
       pidef.toggleFullscreen();
       break;
