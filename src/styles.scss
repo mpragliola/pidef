@@ -180,21 +180,31 @@ button {
 #toolbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: $spacing-md;
   padding: $spacing-sm $spacing-lg;
   background: var(--theme-bg-secondary);
   border-bottom: $border-width solid var(--theme-border);
   min-height: 38px;
 
-  #spacer-left,
-  #spacer-right {
-    flex: 1;
+  #toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
   }
 
   #page-label {
+    flex: 1;
+    text-align: center;
     font-size: $font-size-sm;
     color: var(--theme-text-secondary);
     white-space: nowrap;
+  }
+
+  #toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
   }
 
   #btn-open {
@@ -216,34 +226,8 @@ button {
     justify-content: center;
   }
 
-  #btn-sepia,
-  #btn-invert,
-  #btn-sharpen,
-  #btn-rotate {
-    font-size: $font-size-lg;
-    padding: $spacing-lg $spacing-xl;
-    min-height: $touch-target-lg;
-    min-width: $touch-target-lg;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    &.active {
-      background: var(--theme-button-active);
-    }
-  }
-
+  #btn-rotate,
   #btn-fullscreen {
-    font-size: $font-size-lg;
-    padding: $spacing-lg $spacing-xl;
-    min-height: $touch-target-lg;
-    min-width: $touch-target-lg;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #btn-toggle-bookmarks {
     font-size: $font-size-lg;
     padding: $spacing-lg $spacing-xl;
     min-height: $touch-target-lg;
@@ -403,6 +387,30 @@ button {
   background: var(--theme-bg-secondary);
   border-top: $border-width solid var(--theme-border);
   min-height: 70px;
+  flex-wrap: wrap;
+
+  #btn-sepia,
+  #btn-invert,
+  #btn-sharpen,
+  #btn-toggle-bookmarks {
+    font-size: $font-size-lg;
+    padding: $spacing-lg $spacing-xl;
+    min-height: $touch-target-lg;
+    min-width: $touch-target-lg;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.active {
+      background: var(--theme-button-active);
+    }
+  }
+
+  #nav-divider {
+    width: 1px;
+    height: 30px;
+    background: var(--theme-border);
+  }
 
   button {
     padding: $spacing-md $spacing-xl;

@@ -8,17 +8,15 @@
 </head>
 <body>
   <div id="toolbar">
-    <button id="btn-open">Open PDF</button>
-    <div id="spacer-left"></div>
+    <div id="toolbar-left">
+      <button id="btn-close" title="Close PDF">✕</button>
+      <button id="btn-open">Open PDF</button>
+    </div>
     <span id="page-label"></span>
-    <div id="spacer-right"></div>
-    <button id="btn-close" title="Close PDF">✕</button>
-    <button id="btn-sepia" title="Sepia tone">🟫</button>
-    <button id="btn-invert" title="Invert colors">⚫</button>
-    <button id="btn-sharpen" title="Sharpen (for scanned pages)">✨</button>
-    <button id="btn-rotate" title="Rotate 90° clockwise">↻</button>
-    <button id="btn-fullscreen" title="Fullscreen  F11">⛶</button>
-    <button id="btn-toggle-bookmarks" title="Bookmarks">🔖</button>
+    <div id="toolbar-right">
+      <button id="btn-rotate" title="Rotate 90° clockwise">↻</button>
+      <button id="btn-fullscreen" title="Fullscreen  F11">⛶</button>
+    </div>
   </div>
 
   <svg style="display: none;">
@@ -64,6 +62,11 @@
   </div>
 
   <div id="nav-bar">
+    <button id="btn-sepia" title="Sepia tone">🟫</button>
+    <button id="btn-invert" title="Invert colors">⚫</button>
+    <button id="btn-sharpen" title="Sharpen (for scanned pages)">✨</button>
+    <button id="btn-toggle-bookmarks" title="Bookmarks">🔖</button>
+    <div id="nav-divider"></div>
     <button id="btn-first" title="First page">⏮</button>
     <button id="btn-prev" title="Previous page">◀  Prev</button>
     <input type="range" id="page-slider" min="0" max="1" value="0">
