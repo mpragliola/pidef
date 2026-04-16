@@ -151,28 +151,35 @@ const bookmarksButtonClickHandler = () => {
 const bookmarksNavButton = document.getElementById("btn-toggle-bookmarks-nav");
 if (bookmarksNavButton) {
   bookmarksNavButton.addEventListener("click", bookmarksButtonClickHandler);
+}
 
-  // Long-press detection for overlay mode
-  let bookmarkButtonLongPressTimer: ReturnType<typeof setTimeout> | null = null;
-  bookmarksNavButton.addEventListener("pointerdown", () => {
-    bookmarkButtonLongPressTimer = setTimeout(() => {
+// Long-press on bookmark bar itself to enter overlay mode
+const bookmarkBar = document.getElementById("bookmark-bar");
+if (bookmarkBar) {
+  let bookmarkBarLongPressTimer: ReturnType<typeof setTimeout> | null = null;
+
+  bookmarkBar.addEventListener("pointerdown", (e) => {
+    // Don't trigger on control buttons
+    if ((e.target as HTMLElement).closest("#bookmark-controls")) return;
+
+    bookmarkBarLongPressTimer = setTimeout(() => {
       overlayActiveFromMode = bookmarkDisplayMode;
       bookmarkDisplayMode = 'overlay';
       renderBookmarkBar();
     }, 500);
   });
 
-  bookmarksNavButton.addEventListener("pointerup", () => {
-    if (bookmarkButtonLongPressTimer) {
-      clearTimeout(bookmarkButtonLongPressTimer);
-      bookmarkButtonLongPressTimer = null;
+  bookmarkBar.addEventListener("pointerup", () => {
+    if (bookmarkBarLongPressTimer) {
+      clearTimeout(bookmarkBarLongPressTimer);
+      bookmarkBarLongPressTimer = null;
     }
   });
 
-  bookmarksNavButton.addEventListener("pointercancel", () => {
-    if (bookmarkButtonLongPressTimer) {
-      clearTimeout(bookmarkButtonLongPressTimer);
-      bookmarkButtonLongPressTimer = null;
+  bookmarkBar.addEventListener("pointercancel", () => {
+    if (bookmarkBarLongPressTimer) {
+      clearTimeout(bookmarkBarLongPressTimer);
+      bookmarkBarLongPressTimer = null;
     }
   });
 }
@@ -754,13 +761,19 @@ function clearBookmarks(): void {
 function renderBookmarkBar(): void {
   const bar = document.getElementById("bookmark-bar")!;
   const pills = document.getElementById("bookmark-pills")!;
+  const canvasContainer = document.getElementById("canvas-container")!;
 
-  // Hide bar if overlay mode is active
+  // Handle overlay mode
   if (bookmarkDisplayMode === 'overlay') {
     bar.classList.add("hidden");
+    // Disable page interaction when overlay is active
+    canvasContainer.style.pointerEvents = 'none';
     renderBookmarkOverlay();
     return;
   }
+
+  // Re-enable page interaction when overlay is closed
+  canvasContainer.style.pointerEvents = 'auto';
 
   // Show/hide bar based on display mode
   const shouldShow = pdfDoc !== null && bookmarkDisplayMode !== 'hidden';
@@ -852,6 +865,31 @@ function renderBookmarkOverlay(): void {
 
   overlay.classList.remove("hidden");
   pillsContainer.innerHTML = "";
+
+  // Adjust pills position based on rotation
+  pillsContainer.style.right = '';
+  pillsContainer.style.left = '';
+  pillsContainer.style.top = '';
+  pillsContainer.style.bottom = '';
+
+  switch (rotationSteps) {
+    case 0: // 0°
+      pillsContainer.style.right = '0';
+      pillsContainer.style.top = '0';
+      break;
+    case 1: // 90°
+      pillsContainer.style.bottom = '0';
+      pillsContainer.style.left = '0';
+      break;
+    case 2: // 180°
+      pillsContainer.style.left = '0';
+      pillsContainer.style.bottom = '0';
+      break;
+    case 3: // 270°
+      pillsContainer.style.top = '0';
+      pillsContainer.style.right = '0';
+      break;
+  }
 
   // Render pills stacked vertically with larger fonts
   for (const bm of bookmarks) {
