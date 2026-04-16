@@ -9,11 +9,16 @@ test.describe('Recent Files', () => {
   let window: Page;
   let testPdfPath: string;
 
-  test.beforeEach(async () => {
+  test.beforeAll(async () => {
     testPdfPath = await generateTestPdf(3);
+    app = await electron.launch({
+      args: [path.resolve('dist/main.js')],
+    });
+    window = await app.firstWindow();
+    await window.waitForLoadState('domcontentloaded');
   });
 
-  test.afterEach(async () => {
+  test.afterAll(async () => {
     if (app) {
       await app.close();
     }
@@ -23,13 +28,6 @@ test.describe('Recent Files', () => {
   });
 
   test('recent file appears immediately after opening', async () => {
-    // Launch app
-    app = await electron.launch({
-      args: [path.resolve('dist/main.js')],
-    });
-    window = await app.firstWindow();
-    await window.waitForLoadState('domcontentloaded');
-
     // Verify welcome screen is visible initially
     await expect(window.locator('#welcome-screen')).toBeVisible();
 
