@@ -149,6 +149,7 @@ document.getElementById("btn-half")!.addEventListener("click", () => {
 
 document.getElementById("btn-rotate-cw")!.addEventListener("click", () => {
   if (!pdfDoc) return;
+  remapHalfOnRotation(rotationSteps, 1);
   rotationSteps = (rotationSteps + 1) % 4;
   localStorage.setItem("pidef-rotation", rotationSteps.toString());
   applyUiRotation();
@@ -162,6 +163,7 @@ document.getElementById("btn-rotate-cw")!.addEventListener("click", () => {
 
 document.getElementById("btn-rotate-ccw")!.addEventListener("click", () => {
   if (!pdfDoc) return;
+  remapHalfOnRotation(rotationSteps, -1);
   rotationSteps = (rotationSteps + 3) % 4; // +3 is same as -1 mod 4
   localStorage.setItem("pidef-rotation", rotationSteps.toString());
   applyUiRotation();
@@ -504,6 +506,19 @@ function halfSrcRect(half: 'top' | 'bottom'): [number, number, number, number] {
   return half === 'top'
     ? [0, 0, w, fullH / 2]
     : [0, fullH / 2, w, fullH / 2];
+}
+
+// Remaps halfPage and animFromHalf when rotation changes the split axis.
+// Call BEFORE updating rotationSteps.
+// Portrait (steps 0/2) + CW, or Landscape (steps 1/3) + CCW: flip.
+// All other cases: keep.
+function remapHalfOnRotation(prevSteps: number, delta: 1 | -1): void {
+  if (!halfMode) return;
+  const prevIsPortrait = prevSteps % 2 === 0;
+  const shouldFlip = (prevIsPortrait && delta === 1) || (!prevIsPortrait && delta === -1);
+  if (!shouldFlip) return;
+  halfPage = halfPage === 'top' ? 'bottom' : 'top';
+  animFromHalf = animFromHalf === 'top' ? 'bottom' : 'top';
 }
 
 async function renderPageCached(pageIdx: number): Promise<ImageBitmap | null> {
