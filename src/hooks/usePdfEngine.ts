@@ -54,7 +54,7 @@ import {
 } from '../lib/pdf-geometry';
 import type { AppContextValue } from '../AppContext';
 
-// ── Tunables (must match renderer.ts exactly) ────────────────────────────────
+// ── Tunables ─────────────────────────────────────────────────────────────────
 
 const ANIM_MS = 120;
 const SNAP_MS = 80;
@@ -284,7 +284,7 @@ export function usePdfEngine(
         const adjSurf = surfCache.current.get(adjPage);
         if (adjSurf) {
           // Adjacent page shows its leading half (top when going forward,
-          // bottom when going backward) — matching renderer.ts logic.
+          // bottom when going backward).
           const adjHalf: 'top' | 'bottom' = hm
             ? (dragAdjDir.current === 1 ? 'top' : 'bottom')
             : 'top';

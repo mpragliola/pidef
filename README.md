@@ -67,21 +67,24 @@ pidef is ideal for:
 
 ## Architecture
 
-Minimal three-file design:
+React + TypeScript frontend, Electron main/preload for native integration:
 
 - **`src/main.ts`** — Electron main process; handles window creation, file dialogs, and IPC
-- **`src/renderer.ts`** — All PDF rendering and touch animation logic
 - **`src/preload.ts`** — Secure context bridge exposing the `window.pidef` API
+- **`src/AppProvider.tsx`** — React context with all app state (page, bookmarks, settings)
+- **`src/hooks/usePdfEngine.ts`** — RAF animation loop, pointer/gesture handling, PDF rendering
+- **`src/components/`** — UI components: Toolbar, NavBar, CanvasContainer, BookmarkBar, etc.
+- **`src/lib/`** — Pure utilities: easing, pdf-geometry, bookmark-utils
 - **`src/styles.scss`** — Touch-optimized styling
 
-The renderer uses `pdfjs-dist` with `OffscreenCanvas` for smooth 60fps page rendering and frame-based animation. State machine drives gestures: `IDLE` → `DRAGGING` → `SNAP` or `ANIMATING`.
+The PDF engine uses `pdfjs-dist` with `OffscreenCanvas` for smooth 60fps rendering. Animation state machine: `idle` → `dragging` → `snap` or `animating`.
 
 ## Configuration
 
-Key animation tuning:
-- **`ANIM_MS`** (220 ms) — Page slide duration; adjust for faster or slower feel
-- **`SNAP_MS`** (150 ms) — Snap-back duration when gesture doesn't commit
-- **`THRESHOLD_PX`** (100 px) — Minimum swipe distance to turn a page
+Key animation tuning (in `src/hooks/usePdfEngine.ts`):
+- **`ANIM_MS`** (120 ms) — Page slide duration
+- **`SNAP_MS`** (80 ms) — Snap-back duration when gesture doesn't commit
+- **`THRESHOLD_PX`** (40 px) — Minimum swipe distance to turn a page
 - **`SLIDE_PX`** (40 px) — Incoming page preview slide distance
 
 ## License
