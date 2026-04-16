@@ -163,7 +163,9 @@ if (bookmarkBar) {
     if ((e.target as HTMLElement).closest("#bookmark-controls")) return;
 
     bookmarkBarLongPressTimer = setTimeout(() => {
-      overlayActiveFromMode = bookmarkDisplayMode;
+      if (bookmarkDisplayMode !== 'overlay') {
+        overlayActiveFromMode = bookmarkDisplayMode;
+      }
       bookmarkDisplayMode = 'overlay';
       renderBookmarkBar();
     }, 500);
