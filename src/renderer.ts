@@ -262,52 +262,6 @@ if (overlay) {
   });
 }
 
-// ── 1-line bookmark bar manual scroll (handles CSS-rotated coordinate space) ──
-
-{
-  const pills = document.getElementById("bookmark-pills")!;
-  let pillsDragging = false;
-  let pillsStartX = 0;
-  let pillsStartY = 0;
-  let pillsStartScrollLeft = 0;
-  let pillsDragCommitted = false;
-  const PILLS_DRAG_THRESHOLD = 5;
-
-  pills.addEventListener("pointerdown", (e) => {
-    if (bookmarkDisplayMode !== '1-line') return;
-    pillsDragging = true;
-    pillsDragCommitted = false;
-    pillsStartX = e.clientX;
-    pillsStartY = e.clientY;
-    pillsStartScrollLeft = pills.scrollLeft;
-    pills.setPointerCapture(e.pointerId);
-  });
-
-  pills.addEventListener("pointermove", (e) => {
-    if (!pillsDragging || bookmarkDisplayMode !== '1-line') return;
-    const vdx = toVisualDx(e.clientX - pillsStartX, e.clientY - pillsStartY);
-    if (!pillsDragCommitted && Math.abs(vdx) > PILLS_DRAG_THRESHOLD) {
-      pillsDragCommitted = true;
-      // Disarm any pill that was armed before the drag started
-      pills.querySelectorAll<HTMLElement>(".bookmark-pill.armed").forEach(p => {
-        (p as any)._disarm?.();
-      });
-    }
-    if (pillsDragCommitted) {
-      pills.scrollLeft = pillsStartScrollLeft - vdx;
-      e.stopPropagation();
-    }
-  });
-
-  const endPillsDrag = (e: PointerEvent) => {
-    if (!pillsDragging) return;
-    pillsDragging = false;
-    pills.releasePointerCapture(e.pointerId);
-  };
-
-  pills.addEventListener("pointerup", endPillsDrag);
-  pills.addEventListener("pointercancel", endPillsDrag);
-}
 
 document.getElementById("btn-add-bookmark")!.addEventListener("click", () => {
   if (!pdfDoc) return;
@@ -908,8 +862,6 @@ function renderBookmarkBar(): void {
       pill.classList.remove("armed");
       if (armedTimer) { clearTimeout(armedTimer); armedTimer = null; }
     };
-    (pill as any)._disarm = disarm; // expose so scroll handler can cancel it
-
     pill.addEventListener("click", () => {
       if (pill.classList.contains("armed")) {
         disarm();
