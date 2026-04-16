@@ -8,15 +8,10 @@
 </head>
 <body>
   <div id="toolbar">
-    <div id="toolbar-left">
-      <button id="btn-close" title="Close PDF">✕</button>
-      <button id="btn-open">Open PDF</button>
-    </div>
-    <span id="page-label"></span>
-    <div id="toolbar-right">
-      <button id="btn-rotate" title="Rotate 90° clockwise">↻</button>
-      <button id="btn-fullscreen" title="Fullscreen  F11">⛶</button>
-    </div>
+    <button id="btn-open" title="Open PDF">📁</button>
+    <button id="btn-close" title="Close PDF">✕</button>
+    <span id="top-bar-title"></span>
+    <button id="btn-rotate" title="Rotate 90° clockwise">↻</button>
   </div>
 
   <svg style="display: none;">
@@ -40,8 +35,18 @@
   </div>
 
   <div id="bookmark-bar" class="hidden">
+    <div id="bookmark-controls">
+      <button id="btn-add-bookmark" title="Add bookmark">+</button>
+      <button id="btn-width-control" title="Width: s/m/l">m</button>
+      <button id="btn-title-toggle" title="Toggle title">Aa</button>
+      <button id="btn-bookmark-tri-state" title="Hide/1-line/All">●</button>
+    </div>
     <div id="bookmark-pills"></div>
-    <button id="btn-add-bookmark" title="Add bookmark for current page">+</button>
+  </div>
+
+  <div id="bookmark-overlay" class="hidden">
+    <div id="bookmark-overlay-backdrop"></div>
+    <div id="bookmark-overlay-pills"></div>
   </div>
 
   <div id="bookmark-edit-modal" class="hidden">
@@ -62,17 +67,24 @@
   </div>
 
   <div id="nav-bar">
-    <button id="btn-sepia" title="Sepia tone">🟫</button>
-    <button id="btn-invert" title="Invert colors">⚫</button>
-    <button id="btn-sharpen" title="Sharpen (for scanned pages)">✨</button>
-    <button id="btn-toggle-bookmarks" title="Bookmarks">🔖</button>
-    <div id="nav-divider"></div>
-    <button id="btn-first" title="First page">⏮</button>
-    <button id="btn-prev" title="Previous page">◀  Prev</button>
-    <input type="range" id="page-slider" min="0" max="1" value="0">
-    <span id="nav-label"></span>
-    <button id="btn-next" title="Next page">Next  ▶</button>
-    <button id="btn-last" title="Last page">⏭</button>
+    <div id="nav-left">
+      <button id="btn-first" title="First page">⏮</button>
+      <button id="btn-prev" title="Previous page">◀</button>
+    </div>
+    <div id="nav-center">
+      <input type="range" id="page-slider" min="0" max="1" value="0">
+      <span id="nav-label"></span>
+    </div>
+    <div id="nav-right">
+      <button id="btn-next" title="Next page">▶</button>
+      <button id="btn-last" title="Last page">⏭</button>
+      <button id="btn-save" title="Save">💾</button>
+      <button id="btn-sepia" title="Sepia tone">🟫</button>
+      <button id="btn-invert" title="Invert colors">⚫</button>
+      <button id="btn-sharpen" title="Sharpen">✨</button>
+      <button id="btn-fullscreen" title="Fullscreen F11">⛶</button>
+      <button id="btn-toggle-bookmarks-nav" title="Bookmarks">🔖</button>
+    </div>
   </div>
 
   <script src="renderer.js"></script>

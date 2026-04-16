@@ -54,6 +54,14 @@ let currentFilePath = "";
 let bookmarks: Bookmark[] = [];
 let bookmarkBarVisible = false;
 
+// Bookmark display modes
+let bookmarkDisplayMode: 'hidden' | '1-line' | 'all' | 'overlay' = '1-line';
+let bookmarkWidthMode: 's' | 'm' | 'l' = 'm';
+let showTopBarTitle = true;
+let nearestBookmarkPage: number | null = null;
+let nearestBookmarkIndex: number | null = null;
+let overlayActiveFromMode: 'hidden' | '1-line' | 'all' = '1-line';
+
 // Surface cache: page index -> ImageBitmap or OffscreenCanvas snapshot
 const surfCache = new Map<number, ImageBitmap>();
 let cacheWidth = 0;
@@ -130,12 +138,96 @@ document.getElementById("btn-fullscreen")!.addEventListener("click", () => {
   pidef.toggleFullscreen();
 });
 
-document.getElementById("btn-toggle-bookmarks")!.addEventListener("click", () => {
-  bookmarkBarVisible = !bookmarkBarVisible;
-  localStorage.setItem("pidef-bookmarks-visible", bookmarkBarVisible.toString());
-  document.getElementById("btn-toggle-bookmarks")!.classList.toggle("active", bookmarkBarVisible);
+// Bookmarks button: cycle through display modes
+const bookmarksButtonClickHandler = () => {
+  const modes: ('hidden' | '1-line' | 'all')[] = ['hidden', '1-line', 'all'];
+  const currentIndex = modes.indexOf(bookmarkDisplayMode as any);
+  bookmarkDisplayMode = modes[(currentIndex + 1) % modes.length];
+  overlayActiveFromMode = bookmarkDisplayMode;
+  localStorage.setItem("pidef-bookmark-display-mode", bookmarkDisplayMode);
   renderBookmarkBar();
-});
+};
+
+const bookmarksNavButton = document.getElementById("btn-toggle-bookmarks-nav");
+if (bookmarksNavButton) {
+  bookmarksNavButton.addEventListener("click", bookmarksButtonClickHandler);
+
+  // Long-press detection for overlay mode
+  let bookmarkButtonLongPressTimer: ReturnType<typeof setTimeout> | null = null;
+  bookmarksNavButton.addEventListener("pointerdown", () => {
+    bookmarkButtonLongPressTimer = setTimeout(() => {
+      overlayActiveFromMode = bookmarkDisplayMode;
+      bookmarkDisplayMode = 'overlay';
+      renderBookmarkBar();
+    }, 500);
+  });
+
+  bookmarksNavButton.addEventListener("pointerup", () => {
+    if (bookmarkButtonLongPressTimer) {
+      clearTimeout(bookmarkButtonLongPressTimer);
+      bookmarkButtonLongPressTimer = null;
+    }
+  });
+
+  bookmarksNavButton.addEventListener("pointercancel", () => {
+    if (bookmarkButtonLongPressTimer) {
+      clearTimeout(bookmarkButtonLongPressTimer);
+      bookmarkButtonLongPressTimer = null;
+    }
+  });
+}
+
+// Width control button
+const widthControlBtn = document.getElementById("btn-width-control");
+if (widthControlBtn) {
+  widthControlBtn.addEventListener("click", () => {
+    const modes: ('s' | 'm' | 'l')[] = ['s', 'm', 'l'];
+    const currentIndex = modes.indexOf(bookmarkWidthMode);
+    bookmarkWidthMode = modes[(currentIndex + 1) % modes.length];
+    widthControlBtn.textContent = bookmarkWidthMode;
+    localStorage.setItem("pidef-bookmark-width-mode", bookmarkWidthMode);
+    renderBookmarkBar();
+  });
+}
+
+// Title toggle button (Aa)
+const titleToggleBtn = document.getElementById("btn-title-toggle");
+if (titleToggleBtn) {
+  titleToggleBtn.addEventListener("click", () => {
+    showTopBarTitle = !showTopBarTitle;
+    localStorage.setItem("pidef-show-top-bar-title", showTopBarTitle.toString());
+    renderTopBar();
+  });
+}
+
+// Tri-state button
+const triStateBtn = document.getElementById("btn-bookmark-tri-state");
+if (triStateBtn) {
+  triStateBtn.addEventListener("click", () => {
+    const modes: ('hidden' | '1-line' | 'all')[] = ['hidden', '1-line', 'all'];
+    const currentIndex = modes.indexOf(bookmarkDisplayMode as any);
+    bookmarkDisplayMode = modes[(currentIndex + 1) % modes.length];
+    localStorage.setItem("pidef-bookmark-display-mode", bookmarkDisplayMode);
+    renderBookmarkBar();
+  });
+}
+
+// Overlay close handlers
+const overlay = document.getElementById("bookmark-overlay");
+const overlayBackdrop = document.getElementById("bookmark-overlay-backdrop");
+if (overlay && overlayBackdrop) {
+  overlayBackdrop.addEventListener("click", () => {
+    bookmarkDisplayMode = overlayActiveFromMode;
+    renderBookmarkBar();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !overlay.classList.contains("hidden")) {
+      bookmarkDisplayMode = overlayActiveFromMode;
+      renderBookmarkBar();
+    }
+  });
+}
 
 document.getElementById("btn-add-bookmark")!.addEventListener("click", () => {
   if (!pdfDoc) return;
@@ -643,6 +735,8 @@ function updateUI() {
     pageSlider.value = "0";
     welcomeScreen.style.display = "";
   }
+  updateNearestBookmark();
+  renderTopBar();
   renderBookmarkBar();
 }
 
@@ -660,20 +754,55 @@ function renderBookmarkBar(): void {
   const bar = document.getElementById("bookmark-bar")!;
   const pills = document.getElementById("bookmark-pills")!;
 
-  const shouldShow = pdfDoc !== null && bookmarkBarVisible;
+  // Hide bar if overlay mode is active
+  if (bookmarkDisplayMode === 'overlay') {
+    bar.classList.add("hidden");
+    renderBookmarkOverlay();
+    return;
+  }
+
+  // Show/hide bar based on display mode
+  const shouldShow = pdfDoc !== null && bookmarkDisplayMode !== 'hidden';
   bar.classList.toggle("hidden", !shouldShow);
 
   pills.innerHTML = "";
 
+  if (!shouldShow) return;
+
+  // Render pills based on mode
   for (const bm of bookmarks) {
     const pill = document.createElement("button");
     pill.className = "bookmark-pill";
-    if (bm.page === currentPage) pill.classList.add("highlighted");
 
-    const labelSpan = document.createElement("span");
-    labelSpan.textContent = bm.label;
-    if (bm.segue) labelSpan.textContent += " ▶";
-    pill.appendChild(labelSpan);
+    // Highlight nearest pill
+    if (nearestBookmarkIndex !== null && bookmarks[nearestBookmarkIndex].page === bm.page) {
+      pill.classList.add("highlighted");
+    }
+
+    // Format content based on width mode
+    const content = formatPillContent(bm.label, bookmarkWidthMode);
+    const leading = extractLeadingChars(bm.label);
+
+    if (bookmarkWidthMode === 's' || (bookmarkWidthMode === 'm' && leading)) {
+      const span = document.createElement("span");
+      span.innerHTML = `<strong class="pill-leading">${leading || '#'}</strong>`;
+      if (bookmarkWidthMode === 'm') {
+        const rest = content.substring(leading.length);
+        span.innerHTML += rest;
+      }
+      pill.appendChild(span);
+    } else {
+      pill.textContent = content;
+    }
+
+    // Add segue arrow if applicable
+    if (bm.segue) {
+      if (pill.textContent) {
+        pill.textContent += ' ▶';
+      } else {
+        pill.innerHTML += ' ▶';
+      }
+    }
 
     // Long-press (500ms) opens edit modal
     let longPressTimer: ReturnType<typeof setTimeout> | null = null;
@@ -690,17 +819,93 @@ function renderBookmarkBar(): void {
     pill.addEventListener("pointercancel", cancelLongPress);
     pill.addEventListener("pointermove", cancelLongPress);
 
+    // Click handler
     pill.addEventListener("click", () => {
       goToPage(bm.page);
     });
 
     pills.appendChild(pill);
   }
+
+  // Center nearest pill in 1-line mode
+  if (bookmarkDisplayMode === '1-line' && nearestBookmarkIndex !== null) {
+    setTimeout(() => {
+      const nearestPill = pills.children[nearestBookmarkIndex!] as HTMLElement;
+      if (nearestPill) {
+        nearestPill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }, 0);
+  }
+
+  renderBookmarkOverlay();
+}
+
+function renderBookmarkOverlay(): void {
+  const overlay = document.getElementById("bookmark-overlay")!;
+  const pillsContainer = document.getElementById("bookmark-overlay-pills")!;
+
+  if (bookmarkDisplayMode !== 'overlay') {
+    overlay.classList.add("hidden");
+    return;
+  }
+
+  overlay.classList.remove("hidden");
+  pillsContainer.innerHTML = "";
+
+  // Render pills stacked vertically with larger fonts
+  for (const bm of bookmarks) {
+    const pill = document.createElement("button");
+    pill.className = "overlay-pill";
+
+    // Highlight nearest pill
+    if (nearestBookmarkIndex !== null && bookmarks[nearestBookmarkIndex].page === bm.page) {
+      pill.classList.add("highlighted");
+    }
+
+    // Format content (use full width in overlay)
+    const leading = extractLeadingChars(bm.label);
+    const content = formatPillContent(bm.label, 'l');
+
+    if (leading) {
+      pill.innerHTML = `<strong class="pill-leading">${leading}</strong> ${content.substring(leading.length)}`;
+    } else {
+      pill.textContent = content;
+    }
+
+    // Add segue arrow
+    if (bm.segue) {
+      if (pill.textContent) {
+        pill.textContent += ' ▶';
+      } else {
+        pill.innerHTML += ' ▶';
+      }
+    }
+
+    // Click handler - jump to page and close overlay
+    pill.addEventListener("click", () => {
+      goToPage(bm.page);
+      bookmarkDisplayMode = overlayActiveFromMode;
+      renderBookmarkBar();
+    });
+
+    pillsContainer.appendChild(pill);
+  }
+}
+
+function renderTopBar(): void {
+  const titleSpan = document.getElementById("top-bar-title")!;
+
+  if (showTopBarTitle && nearestBookmarkPage !== null && nearestBookmarkIndex !== null) {
+    titleSpan.textContent = bookmarks[nearestBookmarkIndex].label;
+  } else {
+    titleSpan.textContent = '';
+  }
 }
 
 function removeBookmark(page: number): void {
   bookmarks = bookmarks.filter((b) => b.page !== page);
   if (currentFilePath) pidef.writeBookmarks(currentFilePath, bookmarks);
+  updateNearestBookmark();
   renderBookmarkBar();
 }
 
@@ -708,7 +913,49 @@ function addBookmark(label: string, page: number): void {
   bookmarks = [...bookmarks.filter((b) => b.page !== page), { label, page }]
     .sort((a, b) => a.page - b.page);
   if (currentFilePath) pidef.writeBookmarks(currentFilePath, bookmarks);
+  updateNearestBookmark();
   renderBookmarkBar();
+}
+
+function findNearestBookmark(): { page: number | null; index: number | null } {
+  if (bookmarks.length === 0) return { page: null, index: null };
+
+  // Find the bookmark with the largest page number that is <= currentPage
+  let nearest: { page: number; index: number } | null = null;
+  for (let i = 0; i < bookmarks.length; i++) {
+    if (bookmarks[i].page <= currentPage) {
+      if (!nearest || bookmarks[i].page > nearest.page) {
+        nearest = { page: bookmarks[i].page, index: i };
+      }
+    }
+  }
+
+  return { page: nearest?.page ?? null, index: nearest?.index ?? null };
+}
+
+function extractLeadingChars(title: string): string {
+  const match = title.match(/^(\d+[a-zA-Z]?)/);
+  return match ? match[1] : '';
+}
+
+function formatPillContent(title: string, mode: 's' | 'm' | 'l'): string {
+  switch (mode) {
+    case 's': {
+      const leading = extractLeadingChars(title);
+      return leading || '#bookmark';
+    }
+    case 'm': {
+      return title.length > 12 ? title.substring(0, 12) + '...' : title;
+    }
+    case 'l':
+      return title;
+  }
+}
+
+function updateNearestBookmark(): void {
+  const { page, index } = findNearestBookmark();
+  nearestBookmarkPage = page;
+  nearestBookmarkIndex = index;
 }
 
 let currentEditingBookmark: Bookmark | null = null;
@@ -1095,10 +1342,17 @@ if (sharpenEnabled) {
 rotationSteps = parseInt(localStorage.getItem("pidef-rotation") ?? "0", 10);
 applyUiRotation();
 
-bookmarkBarVisible = localStorage.getItem("pidef-bookmarks-visible") === "true";
-if (bookmarkBarVisible) {
-  document.getElementById("btn-toggle-bookmarks")!.classList.add("active");
-}
+// Load bookmark display mode preferences
+bookmarkDisplayMode = (localStorage.getItem("pidef-bookmark-display-mode") as any) || '1-line';
+bookmarkWidthMode = (localStorage.getItem("pidef-bookmark-width-mode") as any) || 'm';
+showTopBarTitle = localStorage.getItem("pidef-show-top-bar-title") !== 'false';
+
+// Update UI elements to reflect loaded preferences
+const widthBtn = document.getElementById("btn-width-control");
+if (widthBtn) widthBtn.textContent = bookmarkWidthMode;
+
+// Old bookmarkBarVisible code (kept for backwards compatibility)
+bookmarkBarVisible = bookmarkDisplayMode !== 'hidden';
 
 applyFilters();
 
