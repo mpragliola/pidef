@@ -967,7 +967,7 @@ function updateUI() {
   const disableButtons = (disabled: boolean) => {
     const buttonIds = [
       'btn-close', 'btn-first', 'btn-prev', 'btn-next', 'btn-last',
-      'btn-save', 'btn-sepia', 'btn-invert', 'btn-sharpen', 'btn-half',
+      'btn-sepia', 'btn-invert', 'btn-sharpen', 'btn-half',
       'btn-rotate-cw', 'btn-rotate-ccw', 'btn-fullscreen', 'btn-toggle-bookmarks-nav',
       'btn-add-bookmark', 'btn-width-control', 'btn-title-toggle'
     ];
