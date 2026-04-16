@@ -1108,28 +1108,54 @@ function renderBookmarkOverlay(): void {
   // Stop propagation so tapping the pills panel doesn't bubble to the overlay close handler
   pillsContainer.onpointerdown = (e) => e.stopPropagation();
 
-  // Adjust pills position based on rotation
+  // Position the pills panel on the "visual right" edge (which maps to different
+  // screen edges depending on CSS rotation). Each case sets all 4 edges and
+  // dimension, flex-direction, and border so nothing leaks from CSS defaults.
   pillsContainer.style.right = '';
   pillsContainer.style.left = '';
   pillsContainer.style.top = '';
   pillsContainer.style.bottom = '';
+  pillsContainer.style.width = '';
+  pillsContainer.style.height = '';
+  pillsContainer.style.flexDirection = '';
+  pillsContainer.style.borderTop = '';
+  pillsContainer.style.borderBottom = '';
+  pillsContainer.style.borderLeft = '';
+  pillsContainer.style.borderRight = '';
 
+  const border = '2px solid var(--theme-border)';
   switch (rotationSteps) {
-    case 0: // 0°
+    case 0: // 0° — visual right = screen right
       pillsContainer.style.right = '0';
       pillsContainer.style.top = '0';
+      pillsContainer.style.bottom = '0';
+      pillsContainer.style.width = '200px';
+      pillsContainer.style.flexDirection = 'column';
+      pillsContainer.style.borderLeft = border;
       break;
-    case 1: // 90°
+    case 1: // 90° CW — visual right = screen bottom
       pillsContainer.style.bottom = '0';
       pillsContainer.style.left = '0';
-      break;
-    case 2: // 180°
-      pillsContainer.style.left = '0';
-      pillsContainer.style.bottom = '0';
-      break;
-    case 3: // 270°
-      pillsContainer.style.top = '0';
       pillsContainer.style.right = '0';
+      pillsContainer.style.height = '200px';
+      pillsContainer.style.flexDirection = 'row';
+      pillsContainer.style.borderTop = border;
+      break;
+    case 2: // 180° — visual right = screen left
+      pillsContainer.style.left = '0';
+      pillsContainer.style.top = '0';
+      pillsContainer.style.bottom = '0';
+      pillsContainer.style.width = '200px';
+      pillsContainer.style.flexDirection = 'column';
+      pillsContainer.style.borderRight = border;
+      break;
+    case 3: // 270° CW — visual right = screen top
+      pillsContainer.style.top = '0';
+      pillsContainer.style.left = '0';
+      pillsContainer.style.right = '0';
+      pillsContainer.style.height = '200px';
+      pillsContainer.style.flexDirection = 'row';
+      pillsContainer.style.borderBottom = border;
       break;
   }
 

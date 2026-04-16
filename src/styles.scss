@@ -684,17 +684,11 @@ button {
 
   #bookmark-overlay-pills {
     position: fixed;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 200px;
     display: flex;
-    flex-direction: column;
     gap: $spacing-sm;
     padding: $spacing-lg;
-    overflow-y: auto;
+    overflow: hidden;
     background: var(--theme-bg-primary);
-    border-left: 2px solid var(--theme-border);
     z-index: 1000;
     pointer-events: auto;
     opacity: 0.95;
