@@ -4,6 +4,7 @@ import * as path from "path";
 export interface FileRecord {
   path: string;
   page: number;
+  halfMode?: boolean;
 }
 
 export const RECENT_FILES_MAX = 10;
@@ -61,6 +62,19 @@ export function updateFilePage(
   const file = files.find((f) => f.path === filePath);
   if (file) {
     file.page = page;
+    saveRecentFiles(files, dataDir);
+  }
+}
+
+export function updateFileHalfMode(
+  filePath: string,
+  halfMode: boolean,
+  dataDir: string
+): void {
+  let files = loadRecentFiles(dataDir);
+  const file = files.find((f) => f.path === filePath);
+  if (file) {
+    file.halfMode = halfMode;
     saveRecentFiles(files, dataDir);
   }
 }
