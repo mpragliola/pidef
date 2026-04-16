@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "module": "commonjs",
+    "target": "es2020"
+  },
+  "include": ["src/main.ts", "src/preload.ts", "src/bookmarks.ts", "src/recent-files.ts"]
+}
