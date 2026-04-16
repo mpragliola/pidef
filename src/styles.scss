@@ -83,9 +83,10 @@ $border-radius-sm: 4px;
 $border-radius-md: 8px;
 $border-radius-lg: 12px;
 
-// Touch Targets (minimum 44x44px, preferably 48x48px)
+// Touch Targets
 $touch-target-min: 44px;
 $touch-target-lg: 48px;
+$touch-target-xl: 56px;
 
 // Transitions & Animations
 $transition-fast: 0.15s;
@@ -190,7 +191,7 @@ button {
   padding: $spacing-sm $spacing-lg;
   background: var(--theme-bg-secondary);
   border-bottom: $border-width solid var(--theme-border);
-  min-height: 38px;
+  min-height: $touch-target-xl;
 
   #toolbar-left {
     display: flex;
@@ -216,7 +217,7 @@ button {
     font-size: $font-size-md;
     padding: $spacing-lg $spacing-3xl;
     font-weight: $font-weight-semibold;
-    min-height: $touch-target-lg;
+    min-height: $touch-target-xl;
     display: flex;
     align-items: center;
   }
@@ -224,8 +225,8 @@ button {
   #btn-close {
     font-size: $font-size-lg;
     padding: $spacing-lg $spacing-xl;
-    min-height: $touch-target-lg;
-    min-width: $touch-target-lg;
+    min-height: $touch-target-xl;
+    min-width: $touch-target-xl;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -235,8 +236,8 @@ button {
   #btn-fullscreen {
     font-size: $font-size-lg;
     padding: $spacing-lg $spacing-xl;
-    min-height: $touch-target-lg;
-    min-width: $touch-target-lg;
+    min-height: $touch-target-xl;
+    min-width: $touch-target-xl;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -384,9 +385,9 @@ button {
   position: relative;
   display: flex;
   align-items: center;
-  min-height: $touch-target-lg;
+  min-height: $touch-target-xl;
   padding: $spacing-sm $spacing-lg;
-  font-size: $font-size-sm;
+  font-size: $font-size-md;
   border-radius: $border-radius-md;
   white-space: nowrap;
   cursor: pointer;
@@ -503,7 +504,7 @@ button {
       margin-top: $spacing-sm;
 
       button {
-        min-height: 44px;
+        min-height: $touch-target-xl;
         padding: $spacing-md $spacing-lg;
         font-size: $font-size-sm;
         border: none;
@@ -560,8 +561,8 @@ button {
   }
 
   button {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: $touch-target-xl;
+    min-width: $touch-target-xl;
     padding: $spacing-xs $spacing-md;
     border-radius: $border-radius-sm + 2px;
     cursor: pointer;
@@ -594,13 +595,13 @@ button {
     flex-shrink: 0;
 
     button {
-      min-height: 44px;
-      min-width: 44px;
+      min-height: $touch-target-xl;
+      min-width: $touch-target-xl;
       padding: $spacing-xs;
       border-radius: $border-radius-sm;
       cursor: pointer;
       font-weight: $font-weight-semibold;
-      font-size: $font-size-sm;
+      font-size: $font-size-md;
     }
   }
 
@@ -653,7 +654,7 @@ button {
 }
 
 .overlay-pill {
-  font-size: 0.95em;
+  font-size: $font-size-md;
 }
 
 #bookmark-overlay {
@@ -724,8 +725,8 @@ button {
   align-items: center;
 
   button {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: $touch-target-xl;
+    min-width: $touch-target-xl;
     padding: $spacing-xs $spacing-md;
     border-radius: $border-radius-sm + 2px;
     cursor: pointer;
