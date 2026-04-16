@@ -164,12 +164,17 @@ button {
   cursor: pointer;
   transition: background $transition-fast;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: var(--theme-button-hover);
   }
 
-  &:active {
+  &:active:not(:disabled) {
     background: var(--theme-button-active);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 
