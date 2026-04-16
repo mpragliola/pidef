@@ -35,6 +35,8 @@ export function toVisualDy(dx: number, dy: number, rotationSteps: 0 | 1 | 2 | 3)
   }
 }
 
+// cacheWidth and cacheHeight must be CSS display pixels (i.e. canvas.clientWidth/Height),
+// NOT the physical bitmap dimensions (canvas.width/height which are DPR-scaled).
 export function isInBrightnessZone(
   clientX: number,
   clientY: number,
