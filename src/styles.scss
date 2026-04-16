@@ -120,6 +120,10 @@ body.light-theme {
   box-sizing: border-box;
 }
 
+html {
+  height: 100%;
+}
+
 body {
   background: var(--theme-bg-primary);
   color: var(--theme-text-primary);
@@ -127,9 +131,17 @@ body {
   font-size: $font-size-base;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
   user-select: none;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 // UI rotation — rotates the whole app to support laptops that can't rotate their OS display
@@ -180,73 +192,8 @@ button {
 }
 
 // ============================================================================
-// TOOLBAR
+// TOOLBAR — see second #toolbar block below for active styles
 // ============================================================================
-
-#toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $spacing-md;
-  padding: $spacing-sm $spacing-lg;
-  background: var(--theme-bg-secondary);
-  border-bottom: $border-width solid var(--theme-border);
-  min-height: $touch-target-xl;
-
-  #toolbar-left {
-    display: flex;
-    align-items: center;
-    gap: $spacing-md;
-  }
-
-  #page-label {
-    flex: 1;
-    text-align: center;
-    font-size: $font-size-sm;
-    color: var(--theme-text-secondary);
-    white-space: nowrap;
-  }
-
-  #toolbar-right {
-    display: flex;
-    align-items: center;
-    gap: $spacing-md;
-  }
-
-  #btn-open {
-    font-size: $font-size-md;
-    padding: $spacing-lg $spacing-3xl;
-    font-weight: $font-weight-semibold;
-    min-height: $touch-target-xl;
-    display: flex;
-    align-items: center;
-  }
-
-  #btn-close {
-    font-size: $font-size-lg;
-    padding: $spacing-lg $spacing-xl;
-    min-height: $touch-target-xl;
-    min-width: $touch-target-xl;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #btn-rotate,
-  #btn-fullscreen {
-    font-size: $font-size-lg;
-    padding: $spacing-lg $spacing-xl;
-    min-height: $touch-target-xl;
-    min-width: $touch-target-xl;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    &.active {
-      background: var(--theme-button-active);
-    }
-  }
-}
 
 // ============================================================================
 // CANVAS CONTAINER
@@ -254,6 +201,7 @@ button {
 
 #canvas-container {
   flex: 1;
+  min-height: 0;
   position: relative;
   overflow: hidden;
 
@@ -546,6 +494,7 @@ button {
   background: var(--theme-bg-secondary);
   border-top: $border-width solid var(--theme-border);
   justify-content: space-between;
+  flex-shrink: 0;
 
   #nav-left, #nav-right {
     display: flex;
@@ -594,6 +543,11 @@ button {
   background: var(--theme-bg-secondary);
   border-top: $border-width solid var(--theme-border);
   min-height: 60px;
+  flex-shrink: 0;
+
+  &.mode-all {
+    max-height: 35vh;
+  }
 
   &.hidden {
     display: none;
@@ -736,6 +690,7 @@ button {
   border-bottom: $border-width solid var(--theme-border);
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
 
   button {
     min-height: $touch-target-xl;

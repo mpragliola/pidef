@@ -554,14 +554,15 @@ export function usePdfEngine(
 
     const w = container.clientWidth;
     const h = container.clientHeight;
+    if (w === 0 || h === 0) return;
     const dpr = window.devicePixelRatio || 1;
 
     // Set physical pixel dimensions on the canvas element.
+    // CSS sizing (width:100%; height:100%) is handled by the stylesheet —
+    // we never override canvas.style.width/height here so React's re-renders
+    // can't fight us, and clientWidth/Height always reflect the true layout size.
     canvas.width  = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
-    // Keep the CSS size matching the container's logical pixels.
-    canvas.style.width  = `${w}px`;
-    canvas.style.height = `${h}px`;
 
     // Apply DPR transform so all draw() calls use CSS pixels.
     const context = canvas.getContext('2d');
@@ -936,10 +937,20 @@ export function usePdfEngine(
     const observer = new ResizeObserver(() => resizeCanvas());
     observer.observe(canvas.parentElement);
 
-    // Run once on mount to size the canvas before the first paint.
-    resizeCanvas();
+    // Also listen to window resize so the canvas re-sizes when the Electron
+    // window itself is dragged to a new size. ResizeObserver on the container
+    // alone can miss this when the flex layout is resolved after the observer
+    // fires (container reports 0 height on the first tick).
+    window.addEventListener('resize', resizeCanvas);
 
-    return () => observer.disconnect();
+    // Defer the initial sizing until after the first paint so the flex layout
+    // has fully settled before we read clientWidth/clientHeight.
+    requestAnimationFrame(resizeCanvas);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', resizeCanvas);
+    };
   }, []); // stable; resizeCanvas reads ctxRef.current for live values
 
   // ═══════════════════════════════════════════════════════════════════════════
