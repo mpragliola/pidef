@@ -508,26 +508,28 @@ function halfSrcRect(half: 'top' | 'bottom'): [number, number, number, number] {
     : [0, fullH / 2, w, fullH / 2];
 }
 
-// Returns the surface-space half that is visually "first" (physical top of screen).
-// CSS rotation maps canvas axes to physical screen axes:
-//   steps 0,1: canvas top/left → physical top → surface 'top' is first
-//   steps 2,3: canvas is flipped/inverted → physical top → surface 'bottom' is first
+// Returns the surface-space half that is visually "first" (user's notion of "top half").
+// The CSS rotation maps PDF content to physical screen position:
+//   0°:   top of PDF → physical top   → surface 'top'   is first
+//   90°:  right of PDF → physical top → surface 'bottom' is first (landscape, right half)
+//   180°: bottom of PDF → physical top → surface 'bottom' is first
+//   270°: left of PDF → physical top  → surface 'top'   is first (landscape, left half)
 function firstHalf(): 'top' | 'bottom' {
-  return rotationSteps >= 2 ? 'bottom' : 'top';
+  return (rotationSteps === 1 || rotationSteps === 2) ? 'bottom' : 'top';
 }
-// Returns the surface-space half that is visually "last" (physical bottom of screen).
+// Returns the surface-space half that is visually "last" (user's "bottom half").
 function lastHalf(): 'top' | 'bottom' {
-  return rotationSteps >= 2 ? 'top' : 'bottom';
+  return (rotationSteps === 1 || rotationSteps === 2) ? 'top' : 'bottom';
 }
 
-// Remaps halfPage and animFromHalf when rotation crosses the 180° boundary.
+// Remaps halfPage and animFromHalf to preserve the user's visual position on rotation.
 // Call BEFORE updating rotationSteps.
-// Flip when: Landscape (steps 1/3) + CW, or Portrait (steps 0/2) + CCW.
-// These are the transitions where firstHalf() changes value.
+// Flip when: Portrait (steps 0/2) + CW, or Landscape (steps 1/3) + CCW.
+// These are the transitions where firstHalf() changes value (top↔bottom).
 function remapHalfOnRotation(prevSteps: number, delta: 1 | -1): void {
   if (!halfMode) return;
-  const prevIsLandscape = prevSteps % 2 === 1;
-  const shouldFlip = (prevIsLandscape && delta === 1) || (!prevIsLandscape && delta === -1);
+  const prevIsPortrait = prevSteps % 2 === 0;
+  const shouldFlip = (prevIsPortrait && delta === 1) || (!prevIsPortrait && delta === -1);
   if (!shouldFlip) return;
   halfPage = halfPage === 'top' ? 'bottom' : 'top';
   animFromHalf = animFromHalf === 'top' ? 'bottom' : 'top';
