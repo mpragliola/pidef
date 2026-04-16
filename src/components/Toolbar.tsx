@@ -49,11 +49,11 @@ export function Toolbar() {
         `dialog.showOpenDialog` API is only available there.
       */}
       <button id="btn-open" title="Open PDF" onClick={() => pidef.openFileDialog()}>
-        📁
+        <i className="fa-solid fa-folder-open" />
       </button>
 
       <button id="btn-close" title="Close PDF" disabled={!pdfDoc} onClick={closePdf}>
-        ✕
+        <i className="fa-solid fa-xmark" />
       </button>
 
       {/* Bookmark-derived section title; empty string renders as nothing. */}
@@ -66,7 +66,7 @@ export function Toolbar() {
         className={rotationSteps !== 0 ? 'active' : ''}
         onClick={() => rotate('ccw')}
       >
-        ↺
+        <i className="fa-solid fa-rotate-left" />
       </button>
       <button
         id="btn-rotate-cw"
@@ -75,7 +75,7 @@ export function Toolbar() {
         className={rotationSteps !== 0 ? 'active' : ''}
         onClick={() => rotate('cw')}
       >
-        ↻
+        <i className="fa-solid fa-rotate-right" />
       </button>
 
       {/*
@@ -91,7 +91,7 @@ export function Toolbar() {
         title="Fullscreen F11"
         onClick={() => pidef.toggleFullscreen()}
       >
-        ⛶
+        <i className="fa-solid fa-expand" />
       </button>
     </div>
   );
