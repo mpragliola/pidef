@@ -35,6 +35,7 @@ const SNAP_MS = 80;
 const THRESHOLD_PX = 40;
 const SLIDE_PX = 40;
 const PRERENDER_FWD = 2;
+const HALF_PAN_MS = 100;
 
 const BRIGHTNESS_ZONE_PX = 60;
 const BRIGHTNESS_MIN = 0.1;
@@ -43,7 +44,7 @@ const BRIGHTNESS_PX_PER_UNIT = 200;
 
 // ── State ────────────────────────────────────────────────────────────────────
 
-type State = "idle" | "dragging" | "snap" | "animating";
+type State = "idle" | "dragging" | "snap" | "animating" | "half-pan";
 
 let pdfDoc: import("pdfjs-dist").PDFDocumentProxy | null = null;
 let currentPage = 0;
@@ -61,6 +62,10 @@ let showTopBarTitle = true;
 let nearestBookmarkPage: number | null = null;
 let nearestBookmarkIndex: number | null = null;
 let overlayActiveFromMode: 'hidden' | '1-line' | 'all' = 'hidden';
+
+// Half mode state
+let halfMode = false;
+let halfPage: 'top' | 'bottom' = 'top';
 
 // Surface cache: page index -> ImageBitmap or OffscreenCanvas snapshot
 const surfCache = new Map<number, ImageBitmap>();
@@ -420,22 +425,32 @@ async function renderPage(
   const page = await pdfDoc!.getPage(pageIdx + 1); // pdf.js is 1-indexed
   const viewport = page.getViewport({ scale: 1 });
 
+  // In half mode, double the long axis so each half fills the canvas.
+  // rotationSteps 1/3 means the page is displayed landscape on screen,
+  // so we double the width; otherwise double the height.
+  const surfW = halfMode && (rotationSteps === 1 || rotationSteps === 3)
+    ? width * 2
+    : width;
+  const surfH = halfMode && (rotationSteps === 0 || rotationSteps === 2)
+    ? height * 2
+    : height;
+
   const pad = 0;
   const scale = Math.min(
-    (width - pad * 2) / viewport.width,
-    (height - pad * 2) / viewport.height
+    (surfW - pad * 2) / viewport.width,
+    (surfH - pad * 2) / viewport.height
   );
   const sw = viewport.width * scale;
   const sh = viewport.height * scale;
-  const cx = (width - sw) / 2;
-  const cy = (height - sh) / 2;
+  const cx = (surfW - sw) / 2;
+  const cy = (surfH - sh) / 2;
 
-  const offscreen = new OffscreenCanvas(width, height);
+  const offscreen = new OffscreenCanvas(surfW, surfH);
   const oc = offscreen.getContext("2d")!;
 
   // Dark background
   oc.fillStyle = "#212121";
-  oc.fillRect(0, 0, width, height);
+  oc.fillRect(0, 0, surfW, surfH);
 
   // Drop shadow
   oc.fillStyle = "rgba(0, 0, 0, 0.35)";
@@ -460,6 +475,27 @@ async function renderPage(
   oc.drawImage(renderCanvas, cx, cy);
 
   return createImageBitmap(offscreen);
+}
+
+// Returns [srcX, srcY, srcW, srcH] of the active half within a cached surface.
+// In normal mode, returns the full surface rect.
+function halfSrcRect(half: 'top' | 'bottom'): [number, number, number, number] {
+  const w = cacheWidth;
+  const h = cacheHeight;
+  if (!halfMode) return [0, 0, w, h];
+
+  // Landscape rotation (1 or 3): split is left/right in surface space
+  if (rotationSteps === 1 || rotationSteps === 3) {
+    const fullW = w * 2;
+    return half === 'top'
+      ? [0, 0, fullW / 2, h]
+      : [fullW / 2, 0, fullW / 2, h];
+  }
+  // Portrait rotation (0 or 2): split is top/bottom in surface space
+  const fullH = h * 2;
+  return half === 'top'
+    ? [0, 0, w, fullH / 2]
+    : [0, fullH / 2, w, fullH / 2];
 }
 
 async function renderPageCached(pageIdx: number): Promise<ImageBitmap | null> {
@@ -657,45 +693,74 @@ function draw() {
   ctx.fillRect(0, 0, w, h);
 
   if (!pdfDoc) {
-    // Empty message is shown via DOM
     return;
   }
 
   if (!currentSurf) return;
-  // Apply filters only to the drawn content, not the background
   const filterStr = getFilterString();
   ctx.filter = filterStr;
 
   // ── DRAGGING / SNAP ──────────────────────────────────────────────────
   if (state === "dragging" || state === "snap") {
-    ctx.drawImage(currentSurf, dragX, 0, w, h);
+    const [sx, sy, sw, sh] = halfSrcRect(halfPage);
+    ctx.drawImage(currentSurf, sx, sy, sw, sh, dragX, 0, w, h);
     if (dragAdjDir !== 0) {
       const adjSurf = surfCache.get(currentPage + dragAdjDir);
       if (adjSurf) {
-        ctx.drawImage(adjSurf, dragAdjDir * w + dragX, 0, w, h);
+        // Adjacent page always shows its 'top' half when coming from a page change drag
+        const adjHalf = halfMode
+          ? (dragAdjDir === 1 ? 'top' : 'bottom')
+          : 'top';
+        const [asx, asy, asw, ash] = halfSrcRect(adjHalf);
+        ctx.drawImage(adjSurf, asx, asy, asw, ash, dragAdjDir * w + dragX, 0, w, h);
       }
     }
     ctx.filter = "none";
     return;
   }
 
-  // ── ANIMATING ────────────────────────────────────────────────────────
+  // ── HALF-PAN ────────────────────────────────────────────────────────
+  if (state === "half-pan" && animT < 1.0) {
+    const ease = easeOut(animT);
+    // animDir: +1 means going top→bottom (pan upward), -1 means bottom→top (pan downward)
+    const outY = -animDir * ease * h;
+    const inY = animDir * (1.0 - ease) * h;
+    const [fsx, fsy, fsw, fsh] = halfSrcRect(animDir === 1 ? 'top' : 'bottom');
+    const [csx, csy, csw, csh] = halfSrcRect(halfPage);
+    if (animFromSurf) {
+      ctx.globalAlpha = 1.0;
+      ctx.drawImage(animFromSurf, fsx, fsy, fsw, fsh, 0, outY, w, h);
+    }
+    ctx.globalAlpha = 1.0;
+    ctx.drawImage(currentSurf, csx, csy, csw, csh, 0, inY, w, h);
+    ctx.globalAlpha = 1.0;
+    ctx.filter = "none";
+    return;
+  }
+
+  // ── ANIMATING (horizontal slide / page change) ───────────────────────
   if (state === "animating" && animT < 1.0) {
     const ease = easeOut(animT);
+    const [csx, csy, csw, csh] = halfSrcRect(halfPage);
     if (animFromSurf) {
+      const fromHalf = halfMode
+        ? (animDir === 1 ? 'bottom' : 'top')
+        : halfPage;
+      const [fsx, fsy, fsw, fsh] = halfSrcRect(fromHalf as 'top' | 'bottom');
       ctx.globalAlpha = 1.0 - ease;
-      ctx.drawImage(animFromSurf, 0, 0, w, h);
+      ctx.drawImage(animFromSurf, fsx, fsy, fsw, fsh, 0, 0, w, h);
     }
     const inX = animDir * SLIDE_PX * (1.0 - ease);
     ctx.globalAlpha = ease;
-    ctx.drawImage(currentSurf, inX, 0, w, h);
+    ctx.drawImage(currentSurf, csx, csy, csw, csh, inX, 0, w, h);
     ctx.globalAlpha = 1.0;
     ctx.filter = "none";
     return;
   }
 
   // ── IDLE ─────────────────────────────────────────────────────────────
-  ctx.drawImage(currentSurf, 0, 0, w, h);
+  const [sx, sy, sw, sh] = halfSrcRect(halfPage);
+  ctx.drawImage(currentSurf, sx, sy, sw, sh, 0, 0, w, h);
   ctx.filter = "none";
 }
 
