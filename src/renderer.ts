@@ -614,14 +614,14 @@ function scheduleBrightnessHide() {
 function getFilterString(): string {
   const filters: string[] = [];
 
+  if (sharpenEnabled) {
+    filters.push("url(#sharpen-filter)");
+  }
   if (sepiaEnabled) {
     filters.push("sepia(0.8) brightness(0.6) saturate(0.7)");
   }
   if (invertEnabled) {
     filters.push("invert(1)");
-  }
-  if (sharpenEnabled) {
-    filters.push("url(#sharpen-filter)");
   }
 
   return filters.join(" ");
