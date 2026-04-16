@@ -3,6 +3,7 @@ import { ipcRenderer } from "electron";
 interface FileRecord {
   path: string;
   page: number;
+  halfMode?: boolean;
 }
 
 interface Bookmark {
@@ -18,6 +19,7 @@ interface PidefAPI {
   getRecentFiles: () => Promise<FileRecord[]>;
   addRecentFile: (path: string, page?: number) => Promise<void>;
   updateFilePage: (path: string, page: number) => Promise<void>;
+  updateFileHalfMode: (path: string, halfMode: boolean) => Promise<void>;
   readBookmarks: (pdfPath: string) => Promise<Bookmark[]>;
   writeBookmarks: (pdfPath: string, bookmarks: Bookmark[]) => Promise<void>;
   onOpenFile: (cb: (path: string) => void) => void;
@@ -32,6 +34,7 @@ interface PidefAPI {
   getRecentFiles: () => ipcRenderer.invoke("get-recent-files"),
   addRecentFile: (path: string, page?: number) => ipcRenderer.invoke("add-recent-file", path, page),
   updateFilePage: (path: string, page: number) => ipcRenderer.invoke("update-file-page", path, page),
+  updateFileHalfMode: (path: string, halfMode: boolean) => ipcRenderer.invoke("update-file-half-mode", path, halfMode),
   readBookmarks: (pdfPath: string) => ipcRenderer.invoke("read-bookmarks", pdfPath),
   writeBookmarks: (pdfPath: string, bookmarks: Bookmark[]) => ipcRenderer.invoke("write-bookmarks", pdfPath, bookmarks),
   onOpenFile: (cb: (path: string) => void) => {

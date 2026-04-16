@@ -6,6 +6,7 @@ import {
   loadRecentFiles,
   addRecentFile,
   updateFilePage,
+  updateFileHalfMode,
 } from "./recent-files";
 import { readBookmarks, writeBookmarks, Bookmark } from "./bookmarks";
 
@@ -110,6 +111,10 @@ ipcMain.handle("add-recent-file", (_event, filePath: string, page?: number) => {
 
 ipcMain.handle("update-file-page", (_event, filePath: string, page: number) => {
   updateFilePage(filePath, page, app.getPath("userData"));
+});
+
+ipcMain.handle("update-file-half-mode", (_event, filePath: string, halfMode: boolean) => {
+  updateFileHalfMode(filePath, halfMode, app.getPath("userData"));
 });
 
 ipcMain.handle("toggle-fullscreen", () => {
