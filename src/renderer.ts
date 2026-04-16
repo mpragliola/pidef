@@ -508,6 +508,16 @@ function halfSrcRect(half: 'top' | 'bottom'): [number, number, number, number] {
     : [0, fullH / 2, w, fullH / 2];
 }
 
+// Returns the surface-space half that is visually "first" (top/left on screen)
+// given the current rotation. rotationSteps 1 and 2 flip the axis.
+function firstHalf(): 'top' | 'bottom' {
+  return (rotationSteps === 1 || rotationSteps === 2) ? 'bottom' : 'top';
+}
+// Returns the surface-space half that is visually "last" (bottom/right on screen).
+function lastHalf(): 'top' | 'bottom' {
+  return (rotationSteps === 1 || rotationSteps === 2) ? 'top' : 'bottom';
+}
+
 // Remaps halfPage and animFromHalf when rotation changes the split axis.
 // Call BEFORE updating rotationSteps.
 // Portrait (steps 0/2) + CW, or Landscape (steps 1/3) + CCW: flip.
@@ -691,7 +701,7 @@ function toggleSharpen() {
 
 function toggleHalfMode() {
   halfMode = !halfMode;
-  halfPage = 'top';
+  halfPage = firstHalf();
   const btn = document.getElementById("btn-half")!;
   btn.classList.toggle("active", halfMode);
   // Clear cache — render dimensions change
@@ -755,9 +765,9 @@ function draw() {
     if (dragAdjDir !== 0) {
       const adjSurf = surfCache.get(currentPage + dragAdjDir);
       if (adjSurf) {
-        // Adjacent page always shows its 'top' half when coming from a page change drag
+        // Adjacent page shows its first or last half depending on drag direction
         const adjHalf = halfMode
-          ? (dragAdjDir === 1 ? 'top' : 'bottom')
+          ? (dragAdjDir === 1 ? firstHalf() : lastHalf())
           : 'top';
         const [asx, asy, asw, ash] = halfSrcRect(adjHalf);
         ctx.drawImage(adjSurf, asx, asy, asw, ash, dragAdjDir * w + dragX, 0, w, h);
@@ -773,7 +783,7 @@ function draw() {
     // animDir: +1 means going top→bottom (pan upward), -1 means bottom→top (pan downward)
     const outY = -animDir * ease * h;
     const inY = animDir * (1.0 - ease) * h;
-    const [fsx, fsy, fsw, fsh] = halfSrcRect(animDir === 1 ? 'top' : 'bottom');
+    const [fsx, fsy, fsw, fsh] = halfSrcRect(animDir === 1 ? firstHalf() : lastHalf());
     const [csx, csy, csw, csh] = halfSrcRect(halfPage);
     if (animFromSurf) {
       ctx.globalAlpha = 1.0;
@@ -894,30 +904,30 @@ function beginHalfChange(direction: 1 | -1) {
 
 function goNext() {
   if (!pdfDoc) return;
-  if (halfMode && halfPage === 'top') {
+  if (halfMode && halfPage === firstHalf()) {
     beginHalfChange(1);
     return;
   }
   if (currentPage >= nPages - 1) return;
-  if (halfMode) halfPage = 'top';
+  if (halfMode) halfPage = firstHalf();
   beginPageChange(1);
 }
 
 function goPrev() {
   if (!pdfDoc) return;
-  if (halfMode && halfPage === 'bottom') {
+  if (halfMode && halfPage === lastHalf()) {
     beginHalfChange(-1);
     return;
   }
   if (currentPage <= 0) return;
-  if (halfMode) halfPage = 'bottom';
+  if (halfMode) halfPage = lastHalf();
   beginPageChange(-1);
 }
 
 function goFirst() {
   if (!pdfDoc) return;
-  if (halfMode && halfPage !== 'top') {
-    beginHalfChange(-1); // animate to top half; user presses again to jump pages
+  if (halfMode && halfPage !== firstHalf()) {
+    beginHalfChange(-1); // animate to first half; user presses again to jump pages
     return;
   }
   if (currentPage === 0) return;
@@ -926,8 +936,8 @@ function goFirst() {
 
 function goLast() {
   if (!pdfDoc) return;
-  if (halfMode && halfPage !== 'top') {
-    beginHalfChange(-1); // animate to top half; user presses again to jump pages
+  if (halfMode && halfPage !== firstHalf()) {
+    beginHalfChange(-1); // animate to first half; user presses again to jump pages
     return;
   }
   if (currentPage === nPages - 1) return;
@@ -937,7 +947,7 @@ function goLast() {
 async function goToPage(pageIdx: number) {
   if (!pdfDoc || pageIdx < 0 || pageIdx >= nPages || pageIdx === currentPage) return;
   animFromHalf = halfPage; // capture before halfPage is reset
-  if (halfMode) halfPage = 'top';
+  if (halfMode) halfPage = firstHalf();
   const direction = pageIdx > currentPage ? 1 : -1;
   cancelAll();
   animFromSurf = currentSurf;
@@ -1358,7 +1368,7 @@ async function loadFile(filePath: string) {
   const fileRecord = recentFiles.find((f) => f.path === filePath);
   currentPage = fileRecord ? Math.min(fileRecord.page, nPages - 1) : 0;
   halfMode = fileRecord?.halfMode ?? false;
-  halfPage = 'top';
+  halfPage = firstHalf();
   const halfBtn = document.getElementById("btn-half");
   if (halfBtn) halfBtn.classList.toggle("active", halfMode);
 
@@ -1482,9 +1492,9 @@ canvas.addEventListener("pointermove", (e) => {
     dragX = 0;
     dragAdjDir = 0;
     // In half mode: check if the swipe goes to the other half of this page
-    if (halfMode && direction === 1 && halfPage === 'top') {
+    if (halfMode && direction === 1 && halfPage === firstHalf()) {
       beginHalfChange(1);
-    } else if (halfMode && direction === -1 && halfPage === 'bottom') {
+    } else if (halfMode && direction === -1 && halfPage === lastHalf()) {
       beginHalfChange(-1);
     } else {
       // Page change
@@ -1492,7 +1502,7 @@ canvas.addEventListener("pointermove", (e) => {
         (direction === 1 && currentPage < nPages - 1) ||
         (direction === -1 && currentPage > 0);
       if (canGo) {
-        if (halfMode) halfPage = direction === 1 ? 'top' : 'bottom';
+        if (halfMode) halfPage = direction === 1 ? firstHalf() : lastHalf();
         const adjSurf = surfCache.get(currentPage + direction) ?? null;
         beginPageChange(direction, adjSurf);
       } else {
