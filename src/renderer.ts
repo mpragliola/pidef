@@ -149,7 +149,6 @@ document.getElementById("btn-half")!.addEventListener("click", () => {
 
 document.getElementById("btn-rotate-cw")!.addEventListener("click", () => {
   if (!pdfDoc) return;
-  remapHalfOnRotation(rotationSteps, 1);
   rotationSteps = (rotationSteps + 1) % 4;
   localStorage.setItem("pidef-rotation", rotationSteps.toString());
   applyUiRotation();
@@ -163,7 +162,6 @@ document.getElementById("btn-rotate-cw")!.addEventListener("click", () => {
 
 document.getElementById("btn-rotate-ccw")!.addEventListener("click", () => {
   if (!pdfDoc) return;
-  remapHalfOnRotation(rotationSteps, -1);
   rotationSteps = (rotationSteps + 3) % 4; // +3 is same as -1 mod 4
   localStorage.setItem("pidef-rotation", rotationSteps.toString());
   applyUiRotation();
@@ -489,51 +487,45 @@ async function renderPage(
 
 // Returns [srcX, srcY, srcW, srcH] of the active half within a cached surface.
 // In normal mode, returns the full surface rect.
+// 'top' always means the user's "top" half (physical top of screen after rotation):
+//   0°:   top/bottom split  — 'top' = upper half of surface
+//   90°:  left/right split  — 'top' = RIGHT half of surface (PDF right → physical top)
+//   180°: top/bottom split  — 'top' = LOWER half of surface (PDF bottom → physical top)
+//   270°: left/right split  — 'top' = LEFT half of surface (PDF left → physical top)
 function halfSrcRect(half: 'top' | 'bottom'): [number, number, number, number] {
   const w = cacheWidth;
   const h = cacheHeight;
   if (!halfMode) return [0, 0, w, h];
 
-  // Landscape rotation (1 or 3): split is left/right in surface space
-  if (rotationSteps === 1 || rotationSteps === 3) {
+  if (rotationSteps === 1) {
+    // 90° CW: physical top = PDF right = right half of surface
     const fullW = w * 2;
     return half === 'top'
-      ? [0, 0, fullW / 2, h]
-      : [fullW / 2, 0, fullW / 2, h];
+      ? [fullW / 2, 0, fullW / 2, h]  // right half
+      : [0, 0, fullW / 2, h];          // left half
   }
-  // Portrait rotation (0 or 2): split is top/bottom in surface space
+  if (rotationSteps === 3) {
+    // 270° CW: physical top = PDF left = left half of surface
+    const fullW = w * 2;
+    return half === 'top'
+      ? [0, 0, fullW / 2, h]           // left half
+      : [fullW / 2, 0, fullW / 2, h];  // right half
+  }
+  if (rotationSteps === 2) {
+    // 180°: physical top = PDF bottom = lower half of surface
+    const fullH = h * 2;
+    return half === 'top'
+      ? [0, fullH / 2, w, fullH / 2]  // lower half
+      : [0, 0, w, fullH / 2];          // upper half
+  }
+  // 0°: physical top = PDF top = upper half of surface
   const fullH = h * 2;
   return half === 'top'
     ? [0, 0, w, fullH / 2]
     : [0, fullH / 2, w, fullH / 2];
 }
 
-// Returns the surface-space half that is visually "first" (user's notion of "top half").
-// The CSS rotation maps PDF content to physical screen position:
-//   0°:   top of PDF → physical top   → surface 'top'   is first
-//   90°:  right of PDF → physical top → surface 'bottom' is first (landscape, right half)
-//   180°: bottom of PDF → physical top → surface 'bottom' is first
-//   270°: left of PDF → physical top  → surface 'top'   is first (landscape, left half)
-function firstHalf(): 'top' | 'bottom' {
-  return (rotationSteps === 1 || rotationSteps === 2) ? 'bottom' : 'top';
-}
-// Returns the surface-space half that is visually "last" (user's "bottom half").
-function lastHalf(): 'top' | 'bottom' {
-  return (rotationSteps === 1 || rotationSteps === 2) ? 'top' : 'bottom';
-}
-
-// Remaps halfPage and animFromHalf to preserve the user's visual position on rotation.
-// Call BEFORE updating rotationSteps.
-// Flip when: Portrait (steps 0/2) + CW, or Landscape (steps 1/3) + CCW.
-// These are the transitions where firstHalf() changes value (top↔bottom).
-function remapHalfOnRotation(prevSteps: number, delta: 1 | -1): void {
-  if (!halfMode) return;
-  const prevIsPortrait = prevSteps % 2 === 0;
-  const shouldFlip = (prevIsPortrait && delta === 1) || (!prevIsPortrait && delta === -1);
-  if (!shouldFlip) return;
-  halfPage = halfPage === 'top' ? 'bottom' : 'top';
-  animFromHalf = animFromHalf === 'top' ? 'bottom' : 'top';
-}
+// No remapping needed on rotation: 'top' always means the user's physical top half.
 
 async function renderPageCached(pageIdx: number): Promise<ImageBitmap | null> {
   if (!pdfDoc || pageIdx < 0 || pageIdx >= nPages) return null;
@@ -705,7 +697,7 @@ function toggleSharpen() {
 
 function toggleHalfMode() {
   halfMode = !halfMode;
-  halfPage = firstHalf();
+  halfPage = 'top';
   const btn = document.getElementById("btn-half")!;
   btn.classList.toggle("active", halfMode);
   // Clear cache — render dimensions change
@@ -771,7 +763,7 @@ function draw() {
       if (adjSurf) {
         // Adjacent page shows its first or last half depending on drag direction
         const adjHalf = halfMode
-          ? (dragAdjDir === 1 ? firstHalf() : lastHalf())
+          ? (dragAdjDir === 1 ? 'top' : 'bottom')
           : 'top';
         const [asx, asy, asw, ash] = halfSrcRect(adjHalf);
         ctx.drawImage(adjSurf, asx, asy, asw, ash, dragAdjDir * w + dragX, 0, w, h);
@@ -787,7 +779,7 @@ function draw() {
     // animDir: +1 means going top→bottom (pan upward), -1 means bottom→top (pan downward)
     const outY = -animDir * ease * h;
     const inY = animDir * (1.0 - ease) * h;
-    const [fsx, fsy, fsw, fsh] = halfSrcRect(animDir === 1 ? firstHalf() : lastHalf());
+    const [fsx, fsy, fsw, fsh] = halfSrcRect(animDir === 1 ? 'top' : 'bottom');
     const [csx, csy, csw, csh] = halfSrcRect(halfPage);
     if (animFromSurf) {
       ctx.globalAlpha = 1.0;
@@ -908,29 +900,29 @@ function beginHalfChange(direction: 1 | -1) {
 
 function goNext() {
   if (!pdfDoc) return;
-  if (halfMode && halfPage === firstHalf()) {
+  if (halfMode && halfPage === 'top') {
     beginHalfChange(1);
     return;
   }
   if (currentPage >= nPages - 1) return;
-  if (halfMode) halfPage = firstHalf();
+  if (halfMode) halfPage = 'top';
   beginPageChange(1);
 }
 
 function goPrev() {
   if (!pdfDoc) return;
-  if (halfMode && halfPage === lastHalf()) {
+  if (halfMode && halfPage === 'bottom') {
     beginHalfChange(-1);
     return;
   }
   if (currentPage <= 0) return;
-  if (halfMode) halfPage = lastHalf();
+  if (halfMode) halfPage = 'bottom';
   beginPageChange(-1);
 }
 
 function goFirst() {
   if (!pdfDoc) return;
-  if (halfMode && halfPage !== firstHalf()) {
+  if (halfMode && halfPage !== 'top') {
     beginHalfChange(-1); // animate to first half; user presses again to jump pages
     return;
   }
@@ -940,7 +932,7 @@ function goFirst() {
 
 function goLast() {
   if (!pdfDoc) return;
-  if (halfMode && halfPage !== firstHalf()) {
+  if (halfMode && halfPage !== 'top') {
     beginHalfChange(-1); // animate to first half; user presses again to jump pages
     return;
   }
@@ -951,7 +943,7 @@ function goLast() {
 async function goToPage(pageIdx: number) {
   if (!pdfDoc || pageIdx < 0 || pageIdx >= nPages || pageIdx === currentPage) return;
   animFromHalf = halfPage; // capture before halfPage is reset
-  if (halfMode) halfPage = firstHalf();
+  if (halfMode) halfPage = 'top';
   const direction = pageIdx > currentPage ? 1 : -1;
   cancelAll();
   animFromSurf = currentSurf;
@@ -1372,7 +1364,7 @@ async function loadFile(filePath: string) {
   const fileRecord = recentFiles.find((f) => f.path === filePath);
   currentPage = fileRecord ? Math.min(fileRecord.page, nPages - 1) : 0;
   halfMode = fileRecord?.halfMode ?? false;
-  halfPage = firstHalf();
+  halfPage = 'top';
   const halfBtn = document.getElementById("btn-half");
   if (halfBtn) halfBtn.classList.toggle("active", halfMode);
 
@@ -1496,9 +1488,9 @@ canvas.addEventListener("pointermove", (e) => {
     dragX = 0;
     dragAdjDir = 0;
     // In half mode: check if the swipe goes to the other half of this page
-    if (halfMode && direction === 1 && halfPage === firstHalf()) {
+    if (halfMode && direction === 1 && halfPage === 'top') {
       beginHalfChange(1);
-    } else if (halfMode && direction === -1 && halfPage === lastHalf()) {
+    } else if (halfMode && direction === -1 && halfPage === 'bottom') {
       beginHalfChange(-1);
     } else {
       // Page change
@@ -1506,7 +1498,7 @@ canvas.addEventListener("pointermove", (e) => {
         (direction === 1 && currentPage < nPages - 1) ||
         (direction === -1 && currentPage > 0);
       if (canGo) {
-        if (halfMode) halfPage = direction === 1 ? firstHalf() : lastHalf();
+        if (halfMode) halfPage = direction === 1 ? 'top' : 'bottom';
         const adjSurf = surfCache.get(currentPage + direction) ?? null;
         beginPageChange(direction, adjSurf);
       } else {

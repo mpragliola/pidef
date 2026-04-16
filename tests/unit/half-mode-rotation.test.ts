@@ -1,147 +1,78 @@
 import { describe, it, expect } from 'vitest';
 
-// Pure equivalent of remapHalfOnRotation from renderer.ts for testability.
-// The renderer version closes over and mutates module-level state; this version
-// takes all inputs as parameters and returns a new object — same logic, no DOM deps.
-//
-// firstHalf() by rotation: 0°→'top', 90°→'bottom', 180°→'bottom', 270°→'top'
-// Flip rule: Portrait (steps 0/2) + CW, or Landscape (steps 1/3) + CCW.
-function remapHalfOnRotation(
-  prevSteps: number,
-  delta: 1 | -1,
-  halfPage: 'top' | 'bottom',
-  animFromHalf: 'top' | 'bottom',
-  halfMode: boolean
-): { halfPage: 'top' | 'bottom'; animFromHalf: 'top' | 'bottom' } {
-  if (!halfMode) return { halfPage, animFromHalf };
-  const prevIsPortrait = prevSteps % 2 === 0;
-  const shouldFlip = (prevIsPortrait && delta === 1) || (!prevIsPortrait && delta === -1);
-  if (!shouldFlip) return { halfPage, animFromHalf };
-  return {
-    halfPage: halfPage === 'top' ? 'bottom' : 'top',
-    animFromHalf: animFromHalf === 'top' ? 'bottom' : 'top',
-  };
+// Pure equivalent of halfSrcRect from renderer.ts for testability.
+// 'top' always means the user's physical top of screen after rotation:
+//   0°:   upper half of surface
+//   90°:  right half of surface (PDF right side → physical top after 90° CW)
+//   180°: lower half of surface (PDF bottom → physical top after 180°)
+//   270°: left half of surface (PDF left side → physical top after 270° CW)
+function halfSrcRect(
+  half: 'top' | 'bottom',
+  rotationSteps: number,
+  w: number,
+  h: number
+): [number, number, number, number] {
+  if (rotationSteps === 1) {
+    const fullW = w * 2;
+    return half === 'top'
+      ? [fullW / 2, 0, fullW / 2, h]
+      : [0, 0, fullW / 2, h];
+  }
+  if (rotationSteps === 3) {
+    const fullW = w * 2;
+    return half === 'top'
+      ? [0, 0, fullW / 2, h]
+      : [fullW / 2, 0, fullW / 2, h];
+  }
+  if (rotationSteps === 2) {
+    const fullH = h * 2;
+    return half === 'top'
+      ? [0, fullH / 2, w, fullH / 2]
+      : [0, 0, w, fullH / 2];
+  }
+  // 0°
+  const fullH = h * 2;
+  return half === 'top'
+    ? [0, 0, w, fullH / 2]
+    : [0, fullH / 2, w, fullH / 2];
 }
 
-describe('remapHalfOnRotation', () => {
-  describe('halfMode off — no changes', () => {
-    it('does not remap when halfMode is false (portrait CW)', () => {
-      const result = remapHalfOnRotation(0, 1, 'top', 'top', false);
-      expect(result).toEqual({ halfPage: 'top', animFromHalf: 'top' });
-    });
+const W = 100, H = 200;
 
-    it('does not remap when halfMode is false (landscape CCW)', () => {
-      const result = remapHalfOnRotation(1, -1, 'bottom', 'bottom', false);
-      expect(result).toEqual({ halfPage: 'bottom', animFromHalf: 'bottom' });
+describe('halfSrcRect — top always = physical top of screen', () => {
+  describe('0° — top/bottom split, top = upper half', () => {
+    it("'top' = upper half", () => {
+      expect(halfSrcRect('top', 0, W, H)).toEqual([0, 0, W, H]);
     });
-  });
-
-  // 0°→90° CW (portrait+CW): firstHalf top→bottom, flip
-  describe('portrait (steps=0) + CW → flip', () => {
-    it('flips top to bottom', () => {
-      const result = remapHalfOnRotation(0, 1, 'top', 'top', true);
-      expect(result).toEqual({ halfPage: 'bottom', animFromHalf: 'bottom' });
-    });
-
-    it('flips bottom to top', () => {
-      const result = remapHalfOnRotation(0, 1, 'bottom', 'bottom', true);
-      expect(result).toEqual({ halfPage: 'top', animFromHalf: 'top' });
-    });
-
-    it('flips halfPage and animFromHalf independently', () => {
-      const result = remapHalfOnRotation(0, 1, 'top', 'bottom', true);
-      expect(result).toEqual({ halfPage: 'bottom', animFromHalf: 'top' });
+    it("'bottom' = lower half", () => {
+      expect(halfSrcRect('bottom', 0, W, H)).toEqual([0, H, W, H]);
     });
   });
 
-  // 90°→180° CW (landscape+CW): firstHalf stays bottom, keep
-  describe('landscape (steps=1) + CW → keep', () => {
-    it('keeps top', () => {
-      const result = remapHalfOnRotation(1, 1, 'top', 'top', true);
-      expect(result).toEqual({ halfPage: 'top', animFromHalf: 'top' });
+  describe('90° CW — left/right split, top = right half (PDF right → physical top)', () => {
+    it("'top' = right half", () => {
+      expect(halfSrcRect('top', 1, W, H)).toEqual([W, 0, W, H]);
     });
-
-    it('keeps bottom', () => {
-      const result = remapHalfOnRotation(1, 1, 'bottom', 'bottom', true);
-      expect(result).toEqual({ halfPage: 'bottom', animFromHalf: 'bottom' });
+    it("'bottom' = left half", () => {
+      expect(halfSrcRect('bottom', 1, W, H)).toEqual([0, 0, W, H]);
     });
   });
 
-  // 180°→270° CW (portrait+CW): firstHalf bottom→top, flip
-  describe('portrait (steps=2) + CW → flip', () => {
-    it('flips top to bottom', () => {
-      const result = remapHalfOnRotation(2, 1, 'top', 'top', true);
-      expect(result).toEqual({ halfPage: 'bottom', animFromHalf: 'bottom' });
+  describe('180° — top/bottom split, top = lower half (PDF bottom → physical top)', () => {
+    it("'top' = lower half", () => {
+      expect(halfSrcRect('top', 2, W, H)).toEqual([0, H, W, H]);
     });
-
-    it('flips bottom to top', () => {
-      const result = remapHalfOnRotation(2, 1, 'bottom', 'top', true);
-      expect(result).toEqual({ halfPage: 'top', animFromHalf: 'bottom' });
+    it("'bottom' = upper half", () => {
+      expect(halfSrcRect('bottom', 2, W, H)).toEqual([0, 0, W, H]);
     });
   });
 
-  // 270°→0° CW (landscape+CW): firstHalf stays top, keep
-  describe('landscape (steps=3) + CW → keep', () => {
-    it('keeps top', () => {
-      const result = remapHalfOnRotation(3, 1, 'top', 'top', true);
-      expect(result).toEqual({ halfPage: 'top', animFromHalf: 'top' });
+  describe('270° CW — left/right split, top = left half (PDF left → physical top)', () => {
+    it("'top' = left half", () => {
+      expect(halfSrcRect('top', 3, W, H)).toEqual([0, 0, W, H]);
     });
-
-    it('keeps bottom', () => {
-      const result = remapHalfOnRotation(3, 1, 'bottom', 'bottom', true);
-      expect(result).toEqual({ halfPage: 'bottom', animFromHalf: 'bottom' });
-    });
-  });
-
-  // 0°→270° CCW (portrait+CCW): firstHalf stays top, keep
-  describe('portrait (steps=0) + CCW → keep', () => {
-    it('keeps top', () => {
-      const result = remapHalfOnRotation(0, -1, 'top', 'top', true);
-      expect(result).toEqual({ halfPage: 'top', animFromHalf: 'top' });
-    });
-
-    it('keeps bottom', () => {
-      const result = remapHalfOnRotation(0, -1, 'bottom', 'bottom', true);
-      expect(result).toEqual({ halfPage: 'bottom', animFromHalf: 'bottom' });
-    });
-  });
-
-  // 90°→0° CCW (landscape+CCW): firstHalf bottom→top, flip
-  describe('landscape (steps=1) + CCW → flip', () => {
-    it('flips top to bottom', () => {
-      const result = remapHalfOnRotation(1, -1, 'top', 'top', true);
-      expect(result).toEqual({ halfPage: 'bottom', animFromHalf: 'bottom' });
-    });
-
-    it('flips bottom to top', () => {
-      const result = remapHalfOnRotation(1, -1, 'bottom', 'bottom', true);
-      expect(result).toEqual({ halfPage: 'top', animFromHalf: 'top' });
-    });
-  });
-
-  // 180°→90° CCW (portrait+CCW): firstHalf stays bottom, keep
-  describe('portrait (steps=2) + CCW → keep', () => {
-    it('keeps top', () => {
-      const result = remapHalfOnRotation(2, -1, 'top', 'bottom', true);
-      expect(result).toEqual({ halfPage: 'top', animFromHalf: 'bottom' });
-    });
-
-    it('keeps bottom', () => {
-      const result = remapHalfOnRotation(2, -1, 'bottom', 'bottom', true);
-      expect(result).toEqual({ halfPage: 'bottom', animFromHalf: 'bottom' });
-    });
-  });
-
-  // 270°→180° CCW (landscape+CCW): firstHalf top→bottom, flip
-  describe('landscape (steps=3) + CCW → flip', () => {
-    it('flips top to bottom', () => {
-      const result = remapHalfOnRotation(3, -1, 'top', 'bottom', true);
-      expect(result).toEqual({ halfPage: 'bottom', animFromHalf: 'top' });
-    });
-
-    it('flips bottom to top', () => {
-      const result = remapHalfOnRotation(3, -1, 'bottom', 'top', true);
-      expect(result).toEqual({ halfPage: 'top', animFromHalf: 'bottom' });
+    it("'bottom' = right half", () => {
+      expect(halfSrcRect('bottom', 3, W, H)).toEqual([W, 0, W, H]);
     });
   });
 });
