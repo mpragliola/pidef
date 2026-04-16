@@ -284,6 +284,7 @@ if (overlay) {
     pillsDragCommitted = false;
     pillsStartX = e.clientX;
     pillsStartY = e.clientY;
+    pills.scrollLeft = pills.scrollLeft; // cancel any in-progress smooth scroll
     pillsStartScrollLeft = pills.scrollLeft;
   });
 
