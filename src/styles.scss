@@ -567,6 +567,17 @@ button {
     border-radius: $border-radius-sm + 2px;
     cursor: pointer;
     font-weight: $font-weight-semibold;
+
+    &.active {
+      background: var(--theme-button-active);
+      border-color: var(--theme-text-secondary);
+    }
+
+    &.active-2 {
+      background: #4a6fa5;
+      border-color: #6a8fc5;
+      color: #fff;
+    }
   }
 
   #page-slider {
@@ -684,11 +695,19 @@ button {
 
   #bookmark-overlay-pills {
     position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 200px;
     display: flex;
+    flex-direction: column;
     gap: $spacing-sm;
     padding: $spacing-lg;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    touch-action: none;
     background: var(--theme-bg-primary);
+    border-left: 2px solid var(--theme-border);
     z-index: 1000;
     pointer-events: auto;
     opacity: 0.95;

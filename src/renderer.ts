@@ -101,7 +101,6 @@ let brightnessHideTimer: ReturnType<typeof setTimeout> | null = null;
 // Filter states
 let sepiaEnabled = false;
 let invertEnabled = false;
-let sharpenEnabled = false;
 
 // Rotation state (0=0°, 1=90°, 2=180°, 3=270°)
 let rotationSteps = 0;
@@ -135,11 +134,6 @@ document.getElementById("btn-sepia")!.addEventListener("click", () => {
 document.getElementById("btn-invert")!.addEventListener("click", () => {
   if (!pdfDoc) return;
   toggleInvert();
-});
-
-document.getElementById("btn-sharpen")!.addEventListener("click", () => {
-  if (!pdfDoc) return;
-  toggleSharpen();
 });
 
 document.getElementById("btn-half")!.addEventListener("click", () => {
@@ -358,6 +352,86 @@ if (overlay) {
   };
   pills.addEventListener("pointerup", endDrag);
   pills.addEventListener("pointercancel", endDrag);
+}
+
+// ── Overlay pills manual scroll (rotation-aware, with inertia) ───────────────
+// The overlay panel scrolls vertically in visual space. When the UI is rotated,
+// screen-space deltas must be mapped through toVisualDy() to drive scrollTop.
+{
+  const overlayPills = document.getElementById("bookmark-overlay-pills")!;
+  let activePointerId: number | null = null;
+  let overlayStartX = 0;
+  let overlayStartY = 0;
+  let overlayStartScrollTop = 0;
+  let overlayDragCommitted = false;
+  const OVERLAY_DRAG_THRESHOLD = 8;
+
+  let inertiaRaf: number | null = null;
+  let inertiaVelocity = 0;
+  let lastMoveTime = 0;
+  let lastVdy = 0;
+  const FRICTION = 0.92;
+  const MIN_VELOCITY = 0.05;
+
+  function stopOverlayInertia() {
+    if (inertiaRaf !== null) { cancelAnimationFrame(inertiaRaf); inertiaRaf = null; }
+    inertiaVelocity = 0;
+  }
+
+  function tickOverlayInertia(prevTime: number) {
+    inertiaRaf = requestAnimationFrame((now) => {
+      const dt = now - prevTime;
+      inertiaVelocity *= FRICTION;
+      if (Math.abs(inertiaVelocity) < MIN_VELOCITY) {
+        inertiaRaf = null;
+        return;
+      }
+      overlayPills.scrollTop += inertiaVelocity * dt;
+      tickOverlayInertia(now);
+    });
+  }
+
+  overlayPills.addEventListener("pointerdown", (e) => {
+    stopOverlayInertia();
+    activePointerId = e.pointerId;
+    overlayDragCommitted = false;
+    overlayStartX = e.clientX;
+    overlayStartY = e.clientY;
+    overlayPills.scrollTop = overlayPills.scrollTop;
+    overlayStartScrollTop = overlayPills.scrollTop;
+    lastMoveTime = e.timeStamp;
+    lastVdy = 0;
+    inertiaVelocity = 0;
+  });
+
+  overlayPills.addEventListener("pointermove", (e) => {
+    if (e.pointerId !== activePointerId) return;
+    const vdy = toVisualDy(e.clientX - overlayStartX, e.clientY - overlayStartY);
+    if (!overlayDragCommitted && Math.abs(vdy) > OVERLAY_DRAG_THRESHOLD) {
+      overlayDragCommitted = true;
+      overlayPills.setPointerCapture(e.pointerId);
+    }
+    if (overlayDragCommitted) {
+      overlayPills.scrollTop = overlayStartScrollTop + vdy;
+      const dt = e.timeStamp - lastMoveTime;
+      if (dt > 0) {
+        inertiaVelocity = (vdy - lastVdy) / dt;
+      }
+      lastVdy = vdy;
+      lastMoveTime = e.timeStamp;
+      e.stopPropagation();
+    }
+  });
+
+  const endOverlayDrag = (e: PointerEvent) => {
+    if (e.pointerId !== activePointerId) return;
+    activePointerId = null;
+    if (overlayDragCommitted && Math.abs(inertiaVelocity) > MIN_VELOCITY) {
+      tickOverlayInertia(e.timeStamp);
+    }
+  };
+  overlayPills.addEventListener("pointerup", endOverlayDrag);
+  overlayPills.addEventListener("pointercancel", endOverlayDrag);
 }
 
 document.getElementById("btn-add-bookmark")!.addEventListener("click", () => {
@@ -602,9 +676,6 @@ function scheduleBrightnessHide() {
 function getFilterString(): string {
   const filters: string[] = [];
 
-  if (sharpenEnabled) {
-    filters.push("url(#sharpen-filter)");
-  }
   if (sepiaEnabled) {
     filters.push("sepia(0.8) brightness(0.6) saturate(0.7)");
   }
@@ -645,20 +716,6 @@ function toggleInvert() {
   }
 
   localStorage.setItem("pidef-invert", invertEnabled.toString());
-  applyFilters();
-}
-
-function toggleSharpen() {
-  sharpenEnabled = !sharpenEnabled;
-  const btn = document.getElementById("btn-sharpen")!;
-
-  if (sharpenEnabled) {
-    btn.classList.add("active");
-  } else {
-    btn.classList.remove("active");
-  }
-
-  localStorage.setItem("pidef-sharpen", sharpenEnabled.toString());
   applyFilters();
 }
 
@@ -955,7 +1012,7 @@ function updateUI() {
   const disableButtons = (disabled: boolean) => {
     const buttonIds = [
       'btn-close', 'btn-first', 'btn-prev', 'btn-next', 'btn-last',
-      'btn-sepia', 'btn-invert', 'btn-sharpen', 'btn-half',
+      'btn-sepia', 'btn-invert', 'btn-half',
       'btn-rotate-cw', 'btn-rotate-ccw', 'btn-fullscreen', 'btn-toggle-bookmarks-nav',
       'btn-add-bookmark', 'btn-width-control', 'btn-title-toggle'
     ];
@@ -1108,56 +1165,9 @@ function renderBookmarkOverlay(): void {
   // Stop propagation so tapping the pills panel doesn't bubble to the overlay close handler
   pillsContainer.onpointerdown = (e) => e.stopPropagation();
 
-  // Position the pills panel on the "visual right" edge (which maps to different
-  // screen edges depending on CSS rotation). Each case sets all 4 edges and
-  // dimension, flex-direction, and border so nothing leaks from CSS defaults.
-  pillsContainer.style.right = '';
-  pillsContainer.style.left = '';
-  pillsContainer.style.top = '';
-  pillsContainer.style.bottom = '';
-  pillsContainer.style.width = '';
-  pillsContainer.style.height = '';
-  pillsContainer.style.flexDirection = '';
-  pillsContainer.style.borderTop = '';
-  pillsContainer.style.borderBottom = '';
-  pillsContainer.style.borderLeft = '';
-  pillsContainer.style.borderRight = '';
-
-  const border = '2px solid var(--theme-border)';
-  switch (rotationSteps) {
-    case 0: // 0° — visual right = screen right
-      pillsContainer.style.right = '0';
-      pillsContainer.style.top = '0';
-      pillsContainer.style.bottom = '0';
-      pillsContainer.style.width = '200px';
-      pillsContainer.style.flexDirection = 'column';
-      pillsContainer.style.borderLeft = border;
-      break;
-    case 1: // 90° CW — visual right = screen bottom
-      pillsContainer.style.bottom = '0';
-      pillsContainer.style.left = '0';
-      pillsContainer.style.right = '0';
-      pillsContainer.style.height = '200px';
-      pillsContainer.style.flexDirection = 'row';
-      pillsContainer.style.borderTop = border;
-      break;
-    case 2: // 180° — visual right = screen left
-      pillsContainer.style.left = '0';
-      pillsContainer.style.top = '0';
-      pillsContainer.style.bottom = '0';
-      pillsContainer.style.width = '200px';
-      pillsContainer.style.flexDirection = 'column';
-      pillsContainer.style.borderRight = border;
-      break;
-    case 3: // 270° CW — visual right = screen top
-      pillsContainer.style.top = '0';
-      pillsContainer.style.left = '0';
-      pillsContainer.style.right = '0';
-      pillsContainer.style.height = '200px';
-      pillsContainer.style.flexDirection = 'row';
-      pillsContainer.style.borderBottom = border;
-      break;
-  }
+  // The whole UI rotates as a CSS transform on <body>, so every element —
+  // including position:fixed — lives in the already-rotated coordinate space.
+  // "Visual right" is always CSS right:0. No rotation-switching needed.
 
   // Render pills stacked vertically with larger fonts
   for (const bm of bookmarks) {
@@ -1651,11 +1661,6 @@ if (sepiaEnabled) {
 invertEnabled = localStorage.getItem("pidef-invert") === "true";
 if (invertEnabled) {
   document.getElementById("btn-invert")!.classList.add("active");
-}
-
-sharpenEnabled = localStorage.getItem("pidef-sharpen") === "true";
-if (sharpenEnabled) {
-  document.getElementById("btn-sharpen")!.classList.add("active");
 }
 
 rotationSteps = parseInt(localStorage.getItem("pidef-rotation") ?? "0", 10);
