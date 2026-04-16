@@ -107,7 +107,7 @@ const canvas = document.getElementById("pdf-canvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
 const welcomeScreen = document.getElementById("welcome-screen")!;
 const recentFilesList = document.getElementById("recent-files-list")!;
-const pageLabel = document.getElementById("page-label")!;
+const pageLabel = document.getElementById("nav-label")!;
 const navLabel = document.getElementById("nav-label")!;
 
 document.getElementById("btn-open")!.addEventListener("click", () => {
@@ -138,31 +138,26 @@ document.getElementById("btn-fullscreen")!.addEventListener("click", () => {
   pidef.toggleFullscreen();
 });
 
-// Bookmarks button: cycle through display modes
+/// Bookmarks button: cycle through display modes (hidden → 1-line → all → hidden)
 const bookmarksButtonClickHandler = () => {
   const modes: ('hidden' | '1-line' | 'all')[] = ['hidden', '1-line', 'all'];
   const currentIndex = modes.indexOf(bookmarkDisplayMode as any);
   bookmarkDisplayMode = modes[(currentIndex + 1) % modes.length];
-  overlayActiveFromMode = bookmarkDisplayMode;
+  overlayActiveFromMode = bookmarkDisplayMode !== 'hidden' ? bookmarkDisplayMode : '1-line';
   localStorage.setItem("pidef-bookmark-display-mode", bookmarkDisplayMode);
   renderBookmarkBar();
 };
 
+let bookmarkButtonLongPressTimer: ReturnType<typeof setTimeout> | null = null;
+
 const bookmarksNavButton = document.getElementById("btn-toggle-bookmarks-nav");
 if (bookmarksNavButton) {
+  // Click: cycle through modes
   bookmarksNavButton.addEventListener("click", bookmarksButtonClickHandler);
-}
 
-// Long-press on bookmark bar itself to enter overlay mode
-const bookmarkBar = document.getElementById("bookmark-bar");
-if (bookmarkBar) {
-  let bookmarkBarLongPressTimer: ReturnType<typeof setTimeout> | null = null;
-
-  bookmarkBar.addEventListener("pointerdown", (e) => {
-    // Don't trigger on control buttons
-    if ((e.target as HTMLElement).closest("#bookmark-controls")) return;
-
-    bookmarkBarLongPressTimer = setTimeout(() => {
+  // Long-press: enter overlay mode
+  bookmarksNavButton.addEventListener("pointerdown", () => {
+    bookmarkButtonLongPressTimer = setTimeout(() => {
       if (bookmarkDisplayMode !== 'overlay') {
         overlayActiveFromMode = bookmarkDisplayMode;
       }
@@ -171,17 +166,17 @@ if (bookmarkBar) {
     }, 500);
   });
 
-  bookmarkBar.addEventListener("pointerup", () => {
-    if (bookmarkBarLongPressTimer) {
-      clearTimeout(bookmarkBarLongPressTimer);
-      bookmarkBarLongPressTimer = null;
+  bookmarksNavButton.addEventListener("pointerup", () => {
+    if (bookmarkButtonLongPressTimer) {
+      clearTimeout(bookmarkButtonLongPressTimer);
+      bookmarkButtonLongPressTimer = null;
     }
   });
 
-  bookmarkBar.addEventListener("pointercancel", () => {
-    if (bookmarkBarLongPressTimer) {
-      clearTimeout(bookmarkBarLongPressTimer);
-      bookmarkBarLongPressTimer = null;
+  bookmarksNavButton.addEventListener("pointercancel", () => {
+    if (bookmarkButtonLongPressTimer) {
+      clearTimeout(bookmarkButtonLongPressTimer);
+      bookmarkButtonLongPressTimer = null;
     }
   });
 }
@@ -206,18 +201,6 @@ if (titleToggleBtn) {
     showTopBarTitle = !showTopBarTitle;
     localStorage.setItem("pidef-show-top-bar-title", showTopBarTitle.toString());
     renderTopBar();
-  });
-}
-
-// Tri-state button
-const triStateBtn = document.getElementById("btn-bookmark-tri-state");
-if (triStateBtn) {
-  triStateBtn.addEventListener("click", () => {
-    const modes: ('hidden' | '1-line' | 'all')[] = ['hidden', '1-line', 'all'];
-    const currentIndex = modes.indexOf(bookmarkDisplayMode as any);
-    bookmarkDisplayMode = modes[(currentIndex + 1) % modes.length];
-    localStorage.setItem("pidef-bookmark-display-mode", bookmarkDisplayMode);
-    renderBookmarkBar();
   });
 }
 
@@ -780,6 +763,10 @@ function renderBookmarkBar(): void {
   // Show/hide bar based on display mode
   const shouldShow = pdfDoc !== null && bookmarkDisplayMode !== 'hidden';
   bar.classList.toggle("hidden", !shouldShow);
+
+  // Apply mode-specific styling
+  bar.classList.toggle("mode-1-line", bookmarkDisplayMode === '1-line');
+  bar.classList.toggle("mode-all", bookmarkDisplayMode === 'all');
 
   pills.innerHTML = "";
 

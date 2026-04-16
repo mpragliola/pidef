@@ -374,137 +374,6 @@ button {
   }
 }
 
-// ============================================================================
-// NAVIGATION BAR
-// ============================================================================
-
-#nav-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-lg;
-  padding: $spacing-lg $spacing-md;
-  background: var(--theme-bg-secondary);
-  border-top: $border-width solid var(--theme-border);
-  min-height: 70px;
-  flex-wrap: wrap;
-
-  #btn-sepia,
-  #btn-invert,
-  #btn-sharpen,
-  #btn-toggle-bookmarks {
-    font-size: $font-size-lg;
-    padding: $spacing-lg $spacing-xl;
-    min-height: $touch-target-lg;
-    min-width: $touch-target-lg;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    &.active {
-      background: var(--theme-button-active);
-    }
-  }
-
-  #nav-divider {
-    width: 1px;
-    height: 30px;
-    background: var(--theme-border);
-  }
-
-  button {
-    padding: $spacing-md $spacing-xl;
-    font-size: $font-size-md;
-    min-width: 50px;
-  }
-
-  #btn-first,
-  #btn-last {
-    font-size: $font-size-lg;
-    min-width: $touch-target-lg;
-    min-height: $touch-target-lg;
-    padding: $spacing-md $spacing-lg;
-  }
-
-  #btn-prev,
-  #btn-next {
-    min-width: 80px;
-    min-height: $touch-target-lg;
-  }
-
-  #page-slider {
-    flex: 1;
-    max-width: 300px;
-    height: 6px;
-    cursor: pointer;
-  }
-
-  #nav-label {
-    font-size: $font-size-sm;
-    color: var(--theme-text-secondary);
-    min-width: 110px;
-    text-align: center;
-  }
-}
-
-// ============================================================================
-// BOOKMARK BAR
-// ============================================================================
-
-#bookmark-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: $spacing-sm;
-  padding: $spacing-sm $spacing-lg;
-  background: var(--theme-bg-secondary);
-  border-top: $border-width solid var(--theme-border);
-
-  &.hidden {
-    display: none;
-  }
-
-  #bookmark-pills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: $spacing-sm;
-    flex: 1;
-    align-items: center;
-  }
-
-  #btn-add-bookmark {
-    min-height: 32px;
-    min-width: 32px;
-    padding: $spacing-xs $spacing-md;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
-    flex-shrink: 0;
-  }
-
-  #bookmark-input-wrap {
-    display: flex;
-    gap: $spacing-xs;
-    align-items: center;
-    flex: 1;
-
-    input {
-      height: 32px;
-      padding: $spacing-xs $spacing-md;
-      font-size: $font-size-sm;
-      background: var(--theme-bg-primary);
-      color: var(--theme-text-primary);
-      border: $border-width solid var(--theme-border);
-      border-radius: $border-radius-sm;
-      min-width: 120px;
-    }
-
-    button {
-      min-height: 32px;
-      padding: $spacing-xs $spacing-md;
-      font-size: $font-size-sm;
-    }
-  }
-}
 
 .bookmark-pill {
   position: relative;
@@ -706,8 +575,9 @@ button {
 
   #bookmark-controls {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: $spacing-xs;
+    flex-shrink: 0;
 
     button {
       min-height: 44px;
@@ -723,11 +593,41 @@ button {
   #bookmark-pills {
     flex: 1;
     display: flex;
-    flex-wrap: wrap;
     gap: $spacing-xs;
+    align-content: flex-start;
+  }
+
+  &.mode-1-line #bookmark-pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+
+    /* Show scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--theme-border) var(--theme-bg-secondary);
+
+    /* Webkit scrollbar styling */
+    &::-webkit-scrollbar {
+      height: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: var(--theme-bg-secondary);
+    }
+    &::-webkit-scrollbar-thumb {
+      background: var(--theme-border);
+      border-radius: 3px;
+
+      &:hover {
+        background: var(--theme-text-secondary);
+      }
+    }
+  }
+
+  &.mode-all #bookmark-pills {
+    flex-wrap: wrap;
     overflow-y: auto;
     overflow-x: hidden;
-    align-content: flex-start;
   }
 }
 
@@ -749,7 +649,7 @@ button {
   right: 0;
   bottom: 0;
   display: flex;
-  z-index: 1000;
+  z-index: 999;
   pointer-events: none;
 
   &.hidden {
@@ -762,9 +662,9 @@ button {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.4);
     pointer-events: auto;
-    z-index: 1000;
+    z-index: 999;
   }
 
   #bookmark-overlay-pills {
@@ -779,15 +679,19 @@ button {
     padding: $spacing-lg;
     overflow-y: auto;
     background: var(--theme-bg-primary);
-    z-index: 1001;
+    border-left: 2px solid var(--theme-border);
+    z-index: 1000;
     pointer-events: auto;
+    opacity: 0.95;
 
     button {
       min-height: auto;
       padding: $spacing-md;
       text-align: left;
-      border-radius: $border-radius-sm;
+      border-radius: $border-radius-md;
       cursor: pointer;
+      background: var(--theme-button-bg);
+      border: 1px solid var(--theme-border);
 
       &.highlighted {
         background: var(--theme-button-active);
