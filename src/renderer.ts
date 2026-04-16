@@ -791,10 +791,10 @@ function renderBookmarkBar(): void {
     const content = formatPillContent(bm.label, bookmarkWidthMode);
     const leading = extractLeadingChars(bm.label);
 
-    if (bookmarkWidthMode === 's' || (bookmarkWidthMode === 'm' && leading)) {
+    if (bookmarkWidthMode === 's' || bookmarkWidthMode === 'm' || bookmarkWidthMode === 'l') {
       const span = document.createElement("span");
       span.innerHTML = `<strong class="pill-leading">${leading || '#'}</strong>`;
-      if (bookmarkWidthMode === 'm') {
+      if (bookmarkWidthMode === 'm' || bookmarkWidthMode === 'l') {
         const rest = content.substring(leading.length);
         span.innerHTML += rest;
       }
