@@ -4,6 +4,7 @@ import { AppProvider } from './AppProvider';
 import { useAppContext } from './AppContext';
 import { useIpc } from './hooks/useIpc';
 import { Toolbar } from './components/Toolbar';
+import { NavBar } from './components/NavBar';
 
 function AppInner() {
   useIpc();
@@ -19,6 +20,7 @@ function AppInner() {
   return (
     <>
       <Toolbar />
+      <NavBar />
     </>
   );
 }
