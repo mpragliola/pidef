@@ -380,12 +380,12 @@ button {
   display: flex;
   align-items: center;
   min-height: $touch-target-lg;
-  min-width: $touch-target-lg;
   padding: $spacing-sm $spacing-lg;
   font-size: $font-size-sm;
   border-radius: $border-radius-md;
   white-space: nowrap;
   cursor: pointer;
+  flex-shrink: 0;
 
   &.highlighted {
     background: var(--theme-button-active);
