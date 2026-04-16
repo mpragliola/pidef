@@ -27,7 +27,7 @@ import { useState, useCallback } from 'react';
  * @returns A `[value, setValue]` tuple identical in shape to `useState`,
  *          except that calling `setValue` also writes to localStorage.
  */
-export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T) => void] {
+export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T | ((prev: T) => T)) => void] {
   const [state, setState] = useState<T>(() => {
     // Lazy initialiser: this function runs once when the component first
     // mounts and is never called again on subsequent re-renders.  Passing
@@ -46,13 +46,16 @@ export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T)
     }
   });
 
-  const setValue = useCallback((value: T) => {
-    setState(value);
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-      // ignore — e.g. storage quota exceeded or private-browsing restrictions
-    }
+  const setValue = useCallback((value: T | ((prev: T) => T)) => {
+    setState(prev => {
+      const next = typeof value === 'function' ? (value as (prev: T) => T)(prev) : value;
+      try {
+        localStorage.setItem(key, JSON.stringify(next));
+      } catch {
+        // ignore — e.g. storage quota exceeded or private-browsing restrictions
+      }
+      return next;
+    });
     // `key` is the only dependency: if the caller ever changes the key prop
     // (unlikely in practice, but possible), we need a fresh callback that
     // closes over the new key so writes go to the right localStorage entry.
