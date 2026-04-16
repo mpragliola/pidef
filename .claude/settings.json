@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npm start:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx sass:*)",
+      "Bash(npx vite:*)",
+      "Bash(npx electron:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npx playwright:*)",
+      "Bash(node:*)",
+      "Bash(node_modules/.bin/electron:*)",
+      "Bash(node_modules/.bin/playwright:*)",
+      "Bash(node_modules/electron/dist/electron:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git rm:*)",
+      "Bash(git worktree:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(pkill:*)",
+      "Skill(commit-commands:commit)",
+      "WebSearch"
+    ]
+  }
+}

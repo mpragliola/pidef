@@ -1,5 +1,6 @@
-# Claude Code
-.claude
+# Claude Code — ignore local/machine-specific files, commit CLAUDE.md and settings.json
+.claude/settings.local.json
+.claude/worktrees/
 
 # IDE
 .vscode
