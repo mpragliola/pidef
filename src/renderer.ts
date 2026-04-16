@@ -60,7 +60,7 @@ let bookmarkWidthMode: 's' | 'm' | 'l' = 'm';
 let showTopBarTitle = true;
 let nearestBookmarkPage: number | null = null;
 let nearestBookmarkIndex: number | null = null;
-let overlayActiveFromMode: 'hidden' | '1-line' | 'all' = '1-line';
+let overlayActiveFromMode: 'hidden' | '1-line' | 'all' = 'hidden';
 
 // Surface cache: page index -> ImageBitmap or OffscreenCanvas snapshot
 const surfCache = new Map<number, ImageBitmap>();
@@ -166,8 +166,14 @@ document.getElementById("btn-fullscreen")!.addEventListener("click", () => {
 });
 
 /// Bookmarks button: cycle through display modes (hidden → 1-line → all → hidden)
+let bookmarkLongPressActivated = false;
 const bookmarksButtonClickHandler = () => {
   if (!pdfDoc) return;
+  // If this click follows a long-press that opened the overlay, swallow it
+  if (bookmarkLongPressActivated) {
+    bookmarkLongPressActivated = false;
+    return;
+  }
   const modes: ('hidden' | '1-line' | 'all')[] = ['hidden', '1-line', 'all'];
   const currentIndex = modes.indexOf(bookmarkDisplayMode as any);
   bookmarkDisplayMode = modes[(currentIndex + 1) % modes.length];
@@ -191,6 +197,7 @@ if (bookmarksNavButton) {
         overlayActiveFromMode = bookmarkDisplayMode;
       }
       bookmarkDisplayMode = 'overlay';
+      bookmarkLongPressActivated = true;
       renderBookmarkBar();
     }, 500);
   });
@@ -237,9 +244,12 @@ if (titleToggleBtn) {
 
 // Overlay close handlers
 const overlay = document.getElementById("bookmark-overlay");
-const overlayBackdrop = document.getElementById("bookmark-overlay-backdrop");
-if (overlay && overlayBackdrop) {
-  overlayBackdrop.addEventListener("click", () => {
+if (overlay) {
+  // Close when tapping anywhere on the overlay container (backdrop area).
+  // The pills panel stops propagation so tapping a pill doesn't bubble here.
+  overlay.addEventListener("pointerdown", (e) => {
+    e.stopPropagation();
+    e.preventDefault();
     bookmarkDisplayMode = overlayActiveFromMode;
     renderBookmarkBar();
   });
@@ -796,6 +806,7 @@ function renderBookmarkBar(): void {
 
   // Re-enable page interaction when overlay is closed
   canvasContainer.style.pointerEvents = 'auto';
+  renderBookmarkOverlay(); // hides the overlay if not in overlay mode
 
   // Show/hide bar based on display mode
   const shouldShow = pdfDoc !== null && bookmarkDisplayMode !== 'hidden';
@@ -891,6 +902,8 @@ function renderBookmarkOverlay(): void {
 
   overlay.classList.remove("hidden");
   pillsContainer.innerHTML = "";
+  // Stop propagation so tapping the pills panel doesn't bubble to the overlay close handler
+  pillsContainer.onpointerdown = (e) => e.stopPropagation();
 
   // Adjust pills position based on rotation
   pillsContainer.style.right = '';
