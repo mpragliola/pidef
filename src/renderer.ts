@@ -130,8 +130,28 @@ document.getElementById("btn-sharpen")!.addEventListener("click", () => {
   toggleSharpen();
 });
 
-document.getElementById("btn-rotate")!.addEventListener("click", () => {
-  cycleRotate();
+document.getElementById("btn-rotate-cw")!.addEventListener("click", () => {
+  rotationSteps = (rotationSteps + 1) % 4;
+  localStorage.setItem("pidef-rotation", rotationSteps.toString());
+  applyUiRotation();
+  if (rotationSteps === 2 || rotationSteps === 0) {
+    surfCache.clear();
+    rendering.clear();
+    currentSurf = null;
+    bgScan();
+  }
+});
+
+document.getElementById("btn-rotate-ccw")!.addEventListener("click", () => {
+  rotationSteps = (rotationSteps + 3) % 4; // +3 is same as -1 mod 4
+  localStorage.setItem("pidef-rotation", rotationSteps.toString());
+  applyUiRotation();
+  if (rotationSteps === 2 || rotationSteps === 0) {
+    surfCache.clear();
+    rendering.clear();
+    currentSurf = null;
+    bgScan();
+  }
 });
 
 document.getElementById("btn-fullscreen")!.addEventListener("click", () => {
@@ -506,29 +526,14 @@ function applyUiRotation() {
   else if (rotationSteps === 2) document.body.classList.add("rotate-180");
   else if (rotationSteps === 3) document.body.classList.add("rotate-270");
 
-  const btn = document.getElementById("btn-rotate")!;
+  const btnCw = document.getElementById("btn-rotate-cw")!;
+  const btnCcw = document.getElementById("btn-rotate-ccw")!;
   if (rotationSteps > 0) {
-    btn.classList.add("active");
+    btnCw.classList.add("active");
+    btnCcw.classList.add("active");
   } else {
-    btn.classList.remove("active");
-  }
-}
-
-function cycleRotate() {
-  rotationSteps = (rotationSteps + 1) % 4;
-  localStorage.setItem("pidef-rotation", rotationSteps.toString());
-  applyUiRotation();
-  // For 90°/270° the body dimensions swap, ResizeObserver fires and re-renders.
-  // For 180° dimensions stay the same; force a cache flush and redraw manually.
-  if (rotationSteps === 2 || rotationSteps === 0) {
-    surfCache.clear();
-    rendering.clear();
-    currentSurf = null;
-    if (pdfDoc && cacheWidth > 0 && cacheHeight > 0) {
-      renderPageCached(currentPage).then((bmp) => {
-        if (bmp) { currentSurf = bmp; draw(); bgScan(); }
-      });
-    }
+    btnCw.classList.remove("active");
+    btnCcw.classList.remove("active");
   }
 }
 

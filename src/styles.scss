@@ -559,6 +559,14 @@ button {
     max-width: 200px;
     cursor: pointer;
   }
+
+  #nav-label {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: var(--theme-text-primary);
+    min-width: 130px;
+    text-align: center;
+  }
 }
 
 #bookmark-bar {
