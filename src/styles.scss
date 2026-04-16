@@ -1,3 +1,5 @@
+@use 'sass:map';
+
 // ============================================================================
 // THEMING SYSTEM
 // ============================================================================
@@ -32,7 +34,7 @@ $themes: (
 
 // Get a theme color value
 @function theme-color($color-name, $theme: 'dark') {
-  @return map-get(map-get($themes, $theme), $color-name);
+  @return map.get(map.get($themes, $theme), $color-name);
 }
 
 // Apply a theme using SCSS variable assignment
@@ -583,24 +585,10 @@ button {
     overflow-y: hidden;
     touch-action: none;
 
-    /* Show scrollbar */
-    scrollbar-width: thin;
-    scrollbar-color: var(--theme-border) var(--theme-bg-secondary);
+    scrollbar-width: none;
 
-    /* Webkit scrollbar styling */
     &::-webkit-scrollbar {
-      height: 6px;
-    }
-    &::-webkit-scrollbar-track {
-      background: var(--theme-bg-secondary);
-    }
-    &::-webkit-scrollbar-thumb {
-      background: var(--theme-border);
-      border-radius: 3px;
-
-      &:hover {
-        background: var(--theme-text-secondary);
-      }
+      display: none;
     }
   }
 
