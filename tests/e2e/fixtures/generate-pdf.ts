@@ -21,3 +21,15 @@ export async function generateTestPdf(pageCount: number = 3): Promise<string> {
   fs.writeFileSync(tmpPath, pdfBytes);
   return tmpPath;
 }
+
+/**
+ * Generates a minimal PDF with `pageCount` blank A4 pages and writes it to `filePath`.
+ */
+export async function generatePDF(filePath: string, pageCount: number = 3): Promise<void> {
+  const pdfDoc = await PDFDocument.create();
+  for (let i = 0; i < pageCount; i++) {
+    pdfDoc.addPage([595, 842]); // A4 portrait
+  }
+  const pdfBytes = await pdfDoc.save();
+  fs.writeFileSync(filePath, pdfBytes);
+}

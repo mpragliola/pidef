@@ -7,7 +7,7 @@ import { generatePDF } from './fixtures/generate-pdf';
 
 test.describe('UI Layout and Touch Targets', () => {
   let app: ElectronApplication;
-  let window: Page;
+  let page: Page;
   let testPdfPath: string;
 
   test.beforeEach(async () => {
@@ -18,8 +18,8 @@ test.describe('UI Layout and Touch Targets', () => {
     app = await electron.launch({
       args: [path.resolve('dist/main.js'), testPdfPath],
     });
-    window = await app.firstWindow();
-    await window.waitForLoadState('domcontentloaded');
+    page = await app.firstWindow();
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test.afterEach(async () => {
@@ -33,7 +33,7 @@ test.describe('UI Layout and Touch Targets', () => {
     const buttons = ['#btn-first', '#btn-prev', '#btn-next', '#btn-last'];
 
     for (const selector of buttons) {
-      const button = window.locator(selector);
+      const button = page.locator(selector);
       const size = await button.evaluate(el => {
         const rect = el.getBoundingClientRect();
         return { width: Math.ceil(rect.width), height: Math.ceil(rect.height) };
@@ -45,14 +45,14 @@ test.describe('UI Layout and Touch Targets', () => {
   });
 
   test('page label displays correctly', async () => {
-    const navLabel = window.locator('#nav-label');
+    const navLabel = page.locator('#nav-label');
     // Should show page count
     const text = await navLabel.textContent();
     expect(text).toMatch(/Page \d+ \/ \d+/);
   });
 
   test('nav bar layout is horizontal', async () => {
-    const navBar = window.locator('#nav-bar');
+    const navBar = page.locator('#nav-bar');
     const flexDirection = await navBar.evaluate(el => {
       return window.getComputedStyle(el).flexDirection;
     });
@@ -61,7 +61,7 @@ test.describe('UI Layout and Touch Targets', () => {
   });
 
   test('nav-left and nav-right are separated', async () => {
-    const navBar = window.locator('#nav-bar');
+    const navBar = page.locator('#nav-bar');
     const justifyContent = await navBar.evaluate(el => {
       return window.getComputedStyle(el).justifyContent;
     });
@@ -71,7 +71,7 @@ test.describe('UI Layout and Touch Targets', () => {
   });
 
   test('canvas container is visible and resizable', async () => {
-    const container = window.locator('#canvas-container');
+    const container = page.locator('#canvas-container');
     await expect(container).toBeVisible();
 
     const bounds = await container.evaluate(el => {
@@ -87,7 +87,7 @@ test.describe('UI Layout and Touch Targets', () => {
   });
 
   test('page slider is accessible', async () => {
-    const slider = window.locator('#page-slider');
+    const slider = page.locator('#page-slider');
     await expect(slider).toBeVisible();
 
     const sliderAttrs = await slider.evaluate(el => ({
@@ -109,7 +109,7 @@ test.describe('UI Layout and Touch Targets', () => {
     ];
 
     for (const selector of toolbarButtons) {
-      const button = window.locator(selector);
+      const button = page.locator(selector);
       const size = await button.evaluate(el => {
         const rect = el.getBoundingClientRect();
         return { width: Math.ceil(rect.width), height: Math.ceil(rect.height) };
@@ -122,7 +122,7 @@ test.describe('UI Layout and Touch Targets', () => {
 
   test('no small hover-dependent UI elements', async () => {
     // Verify all interactive elements are touch-friendly
-    const allButtons = window.locator('button');
+    const allButtons = page.locator('button');
     const count = await allButtons.count();
 
     for (let i = 0; i < count; i++) {
@@ -146,13 +146,13 @@ test.describe('UI Layout and Touch Targets', () => {
 
   test('overlay panel styling', async () => {
     // Show bookmarks and enter overlay
-    const bookmarkBtn = window.locator('#btn-toggle-bookmarks-nav');
+    const bookmarkBtn = page.locator('#btn-toggle-bookmarks-nav');
     await bookmarkBtn.click();
     await bookmarkBtn.dispatchEvent('pointerdown');
-    await window.waitForTimeout(600);
+    await page.waitForTimeout(600);
     await bookmarkBtn.dispatchEvent('pointerup');
 
-    const overlayPills = window.locator('#bookmark-overlay-pills');
+    const overlayPills = page.locator('#bookmark-overlay-pills');
     const style = await overlayPills.evaluate(el => ({
       position: window.getComputedStyle(el).position,
       zIndex: window.getComputedStyle(el).zIndex,
@@ -165,13 +165,13 @@ test.describe('UI Layout and Touch Targets', () => {
   });
 
   test('overlay backdrop is modal (blocks interaction)', async () => {
-    const bookmarkBtn = window.locator('#btn-toggle-bookmarks-nav');
+    const bookmarkBtn = page.locator('#btn-toggle-bookmarks-nav');
     await bookmarkBtn.click();
     await bookmarkBtn.dispatchEvent('pointerdown');
-    await window.waitForTimeout(600);
+    await page.waitForTimeout(600);
     await bookmarkBtn.dispatchEvent('pointerup');
 
-    const backdrop = window.locator('#bookmark-overlay-backdrop');
+    const backdrop = page.locator('#bookmark-overlay-backdrop');
     const pointerEvents = await backdrop.evaluate(el => {
       return window.getComputedStyle(el).pointerEvents;
     });

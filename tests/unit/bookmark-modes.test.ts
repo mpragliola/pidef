@@ -40,7 +40,7 @@ describe('Bookmark Display Modes', () => {
 
   describe('overlay mode', () => {
     it('preserves previous mode when entering overlay', () => {
-      let mode: 'hidden' | '1-line' | 'all' | 'overlay' = '1-line';
+      let mode: 'hidden' | '1-line' | 'all' | 'overlay' = '1-line' as 'hidden' | '1-line' | 'all' | 'overlay';
       let overlayActiveFromMode: '1-line' | 'all' = '1-line';
 
       // Enter overlay
@@ -76,14 +76,14 @@ describe('Bookmark Display Modes', () => {
   describe('visibility logic', () => {
     it('shows bar when mode is 1-line and PDF is loaded', () => {
       const pdfDoc = { numPages: 5 }; // truthy
-      const mode = '1-line';
+      const mode: string = '1-line';
       const shouldShow = pdfDoc !== null && mode !== 'hidden';
       expect(shouldShow).toBe(true);
     });
 
     it('shows bar when mode is all and PDF is loaded', () => {
       const pdfDoc = { numPages: 5 };
-      const mode = 'all';
+      const mode: string = 'all';
       const shouldShow = pdfDoc !== null && mode !== 'hidden';
       expect(shouldShow).toBe(true);
     });
@@ -97,7 +97,7 @@ describe('Bookmark Display Modes', () => {
 
     it('hides bar when no PDF is loaded', () => {
       const pdfDoc = null;
-      const mode = '1-line';
+      const mode: string = '1-line';
       const shouldShow = pdfDoc !== null && mode !== 'hidden';
       expect(shouldShow).toBe(false);
     });
