@@ -20,13 +20,19 @@ test.describe('Fullscreen', () => {
 
   test.beforeEach(async () => {
     // Ensure we start each test in non-fullscreen state
-    await app.evaluate(({ BrowserWindow }) => {
+    const wasFullscreen = await app.evaluate(({ BrowserWindow }) => {
       const win = BrowserWindow.getAllWindows()[0];
-      if (win.isFullScreen()) win.setFullScreen(false);
+      const fs = win.isFullScreen();
+      if (fs) win.setFullScreen(false);
+      return fs;
     });
     await expect.poll(() =>
-      app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())
+      app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen()),
+      { timeout: 15000 }
     ).toBe(false);
+    // Allow the window manager extra time to settle after a fullscreen exit
+    // before the next test issues another fullscreen request.
+    if (wasFullscreen) await window.waitForTimeout(1000);
   });
 
   test('F11 enters fullscreen', async () => {
@@ -38,12 +44,20 @@ test.describe('Fullscreen', () => {
   });
 
   test('Escape exits fullscreen', async () => {
-    await window.keyboard.press('F11');
+    // Enter fullscreen programmatically — F11 via keyboard is unreliable on
+    // Linux after a prior programmatic setFullScreen(false) in beforeEach.
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setFullScreen(true));
     await expect.poll(() =>
       app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen()),
       { timeout: 15000 }
     ).toBe(true);
-    await window.keyboard.press('Escape');
+    // Send Escape via webContents so it reaches the DOM keydown handler
+    // regardless of OS-level window focus state.
+    await app.evaluate(({ BrowserWindow }) => {
+      const win = BrowserWindow.getAllWindows()[0];
+      win.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Escape' });
+      win.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'Escape' });
+    });
     await expect.poll(() =>
       app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen()),
       { timeout: 15000 }

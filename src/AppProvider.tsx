@@ -56,7 +56,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Persisted UI preferences — survive page reload / app restart via localStorage.
   const [bookmarkDisplayMode, setBookmarkDisplayModeRaw] = useLocalStorage<'hidden' | '1-line' | 'all' | 'overlay'>('pidef-bookmark-display-mode', '1-line');
-  const effectiveBookmarkDisplayMode = bookmarkDisplayMode === 'overlay' ? 'hidden' : bookmarkDisplayMode;
   const setBookmarkDisplayMode = (mode: 'hidden' | '1-line' | 'all' | 'overlay') => setBookmarkDisplayModeRaw(mode);
   const [bookmarkWidthMode, setBookmarkWidthMode] = useLocalStorage<'s' | 'm' | 'l'>('pidef-bookmark-width-mode', 'm');
   const [showTopBarTitle, setShowTopBarTitle] = useLocalStorage<boolean>('pidef-show-top-bar-title', true);
@@ -290,7 +289,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const value: AppContextValue = {
     pdfDoc, currentPage, nPages, currentFilePath,
     halfMode, halfPage, bookmarks, editingBookmark,
-    bookmarkDisplayMode: effectiveBookmarkDisplayMode, bookmarkWidthMode, showTopBarTitle,
+    bookmarkDisplayMode, bookmarkWidthMode, showTopBarTitle,
     sepiaEnabled, invertEnabled, rotationSteps, brightness,
     loadFile, closePdf, goNext, goPrev, goFirst, goLast, goToPage,
     toggleHalfMode, toggleSepia, toggleInvert, rotate, setBrightness,

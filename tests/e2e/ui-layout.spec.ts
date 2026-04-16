@@ -32,15 +32,15 @@ test.describe('UI Layout and Touch Targets', () => {
   });
 
   test.beforeEach(async () => {
-    // Close overlay if open, and reset bookmark bar to hidden
+    // Close overlay if open (overlay uses null-render, not hidden class)
     const overlay = page.locator('#bookmark-overlay');
-    const isOverlayHidden = (await overlay.getAttribute('class') ?? '').includes('hidden');
-    if (!isOverlayHidden) {
-      const backdrop = page.locator('#bookmark-overlay-backdrop');
-      await backdrop.click();
+    if (await overlay.isVisible()) {
+      await page.click('#bookmark-overlay-backdrop');
+      await expect(overlay).not.toBeVisible();
     }
+    // Cycle bookmark bar to hidden state (bar uses null-render when hidden)
     const bookmarkBar = page.locator('#bookmark-bar');
-    while (!(await bookmarkBar.getAttribute('class') ?? '').includes('hidden')) {
+    while (await bookmarkBar.isVisible()) {
       await page.click('#btn-toggle-bookmarks-nav');
       await page.waitForTimeout(50);
     }
