@@ -79,6 +79,7 @@ const rendering = new Set<number>();
 let state: State = "idle";
 let currentSurf: ImageBitmap | null = null;
 let animFromSurf: ImageBitmap | null = null;
+let animFromHalf: 'top' | 'bottom' = 'top'; // half that was visible before a page-change animation
 let animDir = 1;
 let animT = 1.0;
 let animStartTime: number | null = null;
@@ -775,10 +776,7 @@ function draw() {
     const ease = easeOut(animT);
     const [csx, csy, csw, csh] = halfSrcRect(halfPage);
     if (animFromSurf) {
-      const fromHalf = halfMode
-        ? (animDir === 1 ? 'bottom' : 'top')
-        : halfPage;
-      const [fsx, fsy, fsw, fsh] = halfSrcRect(fromHalf as 'top' | 'bottom');
+      const [fsx, fsy, fsw, fsh] = halfSrcRect(animFromHalf);
       ctx.globalAlpha = 1.0 - ease;
       ctx.drawImage(animFromSurf, fsx, fsy, fsw, fsh, 0, 0, w, h);
     }
@@ -852,6 +850,7 @@ function onTick(timestamp: number) {
 async function beginPageChange(direction: number, adjSurf?: ImageBitmap | null) {
   cancelAll();
   animFromSurf = currentSurf;
+  animFromHalf = halfPage; // capture the half that was visible before this change
   currentPage += direction;
   currentSurf = adjSurf ?? (await renderPageCached(currentPage));
   animDir = direction;
@@ -903,8 +902,8 @@ function goPrev() {
 function goFirst() {
   if (!pdfDoc) return;
   if (halfMode && halfPage !== 'top') {
-    halfPage = 'top';
-    draw();
+    beginHalfChange(-1); // animate to top half; user presses again to jump pages
+    return;
   }
   if (currentPage === 0) return;
   goToPage(0);
@@ -913,8 +912,8 @@ function goFirst() {
 function goLast() {
   if (!pdfDoc) return;
   if (halfMode && halfPage !== 'top') {
-    halfPage = 'top';
-    draw();
+    beginHalfChange(-1); // animate to top half; user presses again to jump pages
+    return;
   }
   if (currentPage === nPages - 1) return;
   goToPage(nPages - 1);
@@ -922,6 +921,7 @@ function goLast() {
 
 async function goToPage(pageIdx: number) {
   if (!pdfDoc || pageIdx < 0 || pageIdx >= nPages || pageIdx === currentPage) return;
+  animFromHalf = halfPage; // capture before halfPage is reset
   if (halfMode) halfPage = 'top';
   const direction = pageIdx > currentPage ? 1 : -1;
   cancelAll();
