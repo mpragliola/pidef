@@ -434,8 +434,7 @@ async function renderPage(
   const viewport = page.getViewport({ scale: 1 });
 
   // In half mode, double the long axis so each half fills the canvas.
-  // rotationSteps 1/3 means the page is displayed landscape on screen,
-  // so we double the width; otherwise double the height.
+  // At 90°/270° the split is left/right, so double width; otherwise double height.
   const surfW = halfMode && (rotationSteps === 1 || rotationSteps === 3)
     ? width * 2
     : width;
@@ -487,39 +486,34 @@ async function renderPage(
 
 // Returns [srcX, srcY, srcW, srcH] of the active half within a cached surface.
 // In normal mode, returns the full surface rect.
-// 'top' always means the user's "top" half (physical top of screen after rotation):
-//   0°:   top/bottom split  — 'top' = upper half of surface
-//   90°:  left/right split  — 'top' = RIGHT half of surface (PDF right → physical top)
-//   180°: top/bottom split  — 'top' = LOWER half of surface (PDF bottom → physical top)
-//   270°: left/right split  — 'top' = LEFT half of surface (PDF left → physical top)
+// Axes rotate with the document. 'top' = physical top of screen:
+//   0°:   top/bottom split — 'top' = upper half
+//   90°:  left/right split — 'top' = left half  (canvas left → physical top)
+//   180°: top/bottom split — 'top' = lower half (canvas flipped)
+//   270°: left/right split — 'top' = right half (canvas right → physical top)
 function halfSrcRect(half: 'top' | 'bottom'): [number, number, number, number] {
   const w = cacheWidth;
   const h = cacheHeight;
   if (!halfMode) return [0, 0, w, h];
 
   if (rotationSteps === 1) {
-    // 90° CW: physical top = PDF right = right half of surface
     const fullW = w * 2;
     return half === 'top'
-      ? [fullW / 2, 0, fullW / 2, h]  // right half
-      : [0, 0, fullW / 2, h];          // left half
+      ? [0, 0, fullW / 2, h]
+      : [fullW / 2, 0, fullW / 2, h];
   }
   if (rotationSteps === 3) {
-    // 270° CW: physical top = PDF left = left half of surface
     const fullW = w * 2;
     return half === 'top'
-      ? [0, 0, fullW / 2, h]           // left half
-      : [fullW / 2, 0, fullW / 2, h];  // right half
+      ? [fullW / 2, 0, fullW / 2, h]
+      : [0, 0, fullW / 2, h];
   }
-  if (rotationSteps === 2) {
-    // 180°: physical top = PDF bottom = lower half of surface
-    const fullH = h * 2;
-    return half === 'top'
-      ? [0, fullH / 2, w, fullH / 2]  // lower half
-      : [0, 0, w, fullH / 2];          // upper half
-  }
-  // 0°: physical top = PDF top = upper half of surface
   const fullH = h * 2;
+  if (rotationSteps === 2) {
+    return half === 'top'
+      ? [0, fullH / 2, w, fullH / 2]
+      : [0, 0, w, fullH / 2];
+  }
   return half === 'top'
     ? [0, 0, w, fullH / 2]
     : [0, fullH / 2, w, fullH / 2];
