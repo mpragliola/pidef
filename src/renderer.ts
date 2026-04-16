@@ -152,7 +152,7 @@ document.getElementById("btn-rotate-cw")!.addEventListener("click", () => {
   rotationSteps = (rotationSteps + 1) % 4;
   localStorage.setItem("pidef-rotation", rotationSteps.toString());
   applyUiRotation();
-  if (rotationSteps === 2 || rotationSteps === 0 || halfMode) {
+  if (rotationSteps === 2 || rotationSteps === 0) {
     surfCache.clear();
     rendering.clear();
     currentSurf = null;
@@ -165,7 +165,7 @@ document.getElementById("btn-rotate-ccw")!.addEventListener("click", () => {
   rotationSteps = (rotationSteps + 3) % 4; // +3 is same as -1 mod 4
   localStorage.setItem("pidef-rotation", rotationSteps.toString());
   applyUiRotation();
-  if (rotationSteps === 2 || rotationSteps === 0 || halfMode) {
+  if (rotationSteps === 2 || rotationSteps === 0) {
     surfCache.clear();
     rendering.clear();
     currentSurf = null;
@@ -433,14 +433,10 @@ async function renderPage(
   const page = await pdfDoc!.getPage(pageIdx + 1); // pdf.js is 1-indexed
   const viewport = page.getViewport({ scale: 1 });
 
-  // In half mode, double the long axis so each half fills the canvas.
-  // At 90°/270° the split is left/right, so double width; otherwise double height.
-  const surfW = halfMode && (rotationSteps === 1 || rotationSteps === 3)
-    ? width * 2
-    : width;
-  const surfH = halfMode && (rotationSteps === 0 || rotationSteps === 2)
-    ? height * 2
-    : height;
+  // In half mode, double the height so each half fills the canvas (always top/bottom split).
+  // Rotation is a CSS transform on the whole UI; surface space is unaffected.
+  const surfW = width;
+  const surfH = halfMode ? height * 2 : height;
 
   const pad = 0;
   const scale = Math.min(
@@ -486,40 +482,17 @@ async function renderPage(
 
 // Returns [srcX, srcY, srcW, srcH] of the active half within a cached surface.
 // In normal mode, returns the full surface rect.
-// Axes rotate with the document. 'top' = physical top of screen:
-//   0°:   top/bottom split — 'top' = upper half
-//   90°:  left/right split — 'top' = left half  (canvas left → physical top)
-//   180°: top/bottom split — 'top' = lower half (canvas flipped)
-//   270°: left/right split — 'top' = right half (canvas right → physical top)
+// Returns [srcX, srcY, srcW, srcH] of the active half within a cached surface.
+// Always top/bottom split — rotation is a CSS transform on the whole UI, not the surface.
 function halfSrcRect(half: 'top' | 'bottom'): [number, number, number, number] {
   const w = cacheWidth;
   const h = cacheHeight;
   if (!halfMode) return [0, 0, w, h];
-
-  if (rotationSteps === 1) {
-    const fullW = w * 2;
-    return half === 'top'
-      ? [0, 0, fullW / 2, h]
-      : [fullW / 2, 0, fullW / 2, h];
-  }
-  if (rotationSteps === 3) {
-    const fullW = w * 2;
-    return half === 'top'
-      ? [fullW / 2, 0, fullW / 2, h]
-      : [0, 0, fullW / 2, h];
-  }
   const fullH = h * 2;
-  if (rotationSteps === 2) {
-    return half === 'top'
-      ? [0, fullH / 2, w, fullH / 2]
-      : [0, 0, w, fullH / 2];
-  }
   return half === 'top'
     ? [0, 0, w, fullH / 2]
     : [0, fullH / 2, w, fullH / 2];
 }
-
-// No remapping needed on rotation: 'top' always means the user's physical top half.
 
 async function renderPageCached(pageIdx: number): Promise<ImageBitmap | null> {
   if (!pdfDoc || pageIdx < 0 || pageIdx >= nPages) return null;
