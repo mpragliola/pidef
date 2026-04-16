@@ -744,6 +744,7 @@ function updateUI() {
 
 async function loadBookmarksForFile(filePath: string): Promise<void> {
   bookmarks = await pidef.readBookmarks(filePath);
+  updateNearestBookmark();
 }
 
 function clearBookmarks(): void {
