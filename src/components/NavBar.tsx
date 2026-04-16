@@ -117,8 +117,12 @@ export function NavBar() {
   return (
     <div id="nav-bar">
       <div id="nav-left">
-        <button id="btn-first" title="First page" disabled={disabled} onClick={goFirst}>⏮</button>
-        <button id="btn-prev" title="Previous page" disabled={disabled} onClick={goPrev}>◀</button>
+        <button id="btn-first" title="First page" disabled={disabled} onClick={goFirst}>
+          <i className="fa-solid fa-backward-step" />
+        </button>
+        <button id="btn-prev" title="Previous page" disabled={disabled} onClick={goPrev}>
+          <i className="fa-solid fa-chevron-left" />
+        </button>
       </div>
       <div id="nav-center">
         <input
@@ -142,29 +146,39 @@ export function NavBar() {
         <span id="nav-label">{label}</span>
       </div>
       <div id="nav-right">
-        <button id="btn-next" title="Next page" disabled={disabled} onClick={goNext}>▶</button>
-        <button id="btn-last" title="Last page" disabled={disabled} onClick={goLast}>⏭</button>
+        <button id="btn-next" title="Next page" disabled={disabled} onClick={goNext}>
+          <i className="fa-solid fa-chevron-right" />
+        </button>
+        <button id="btn-last" title="Last page" disabled={disabled} onClick={goLast}>
+          <i className="fa-solid fa-forward-step" />
+        </button>
         <button
           id="btn-sepia"
           title="Sepia tone"
           disabled={disabled}
           className={sepiaEnabled ? 'active' : ''}
           onClick={toggleSepia}
-        >🟫</button>
+        >
+          <i className="fa-solid fa-sun" />
+        </button>
         <button
           id="btn-invert"
           title="Invert colors"
           disabled={disabled}
           className={invertEnabled ? 'active' : ''}
           onClick={toggleInvert}
-        >⚫</button>
+        >
+          <i className="fa-solid fa-circle-half-stroke" />
+        </button>
         <button
           id="btn-half"
           title="Half page mode"
           disabled={disabled}
           className={halfMode ? 'active' : ''}
           onClick={toggleHalfMode}
-        >½</button>
+        >
+          <i className="fa-solid fa-table-columns" />
+        </button>
         <button
           id="btn-toggle-bookmarks-nav"
           title="Bookmarks"
@@ -173,7 +187,9 @@ export function NavBar() {
           onPointerUp={handleBookmarkPointerUp}
           onPointerCancel={handleBookmarkPointerUp}
           onClick={handleBookmarkClick}
-        >🔖</button>
+        >
+          <i className="fa-solid fa-bookmark" />
+        </button>
       </div>
     </div>
   );
