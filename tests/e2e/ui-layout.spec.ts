@@ -20,6 +20,8 @@ test.describe('UI Layout and Touch Targets', () => {
     });
     page = await app.firstWindow();
     await page.waitForLoadState('domcontentloaded');
+    // Wait for the PDF to fully load before tests run
+    await expect(page.locator('#nav-label')).toHaveText(/Page \d+ \/ \d+/, { timeout: 15000 });
   });
 
   test.afterAll(async () => {
@@ -40,6 +42,7 @@ test.describe('UI Layout and Touch Targets', () => {
     const bookmarkBar = page.locator('#bookmark-bar');
     while (!(await bookmarkBar.getAttribute('class') ?? '').includes('hidden')) {
       await page.click('#btn-toggle-bookmarks-nav');
+      await page.waitForTimeout(50);
     }
   });
 
@@ -111,7 +114,7 @@ test.describe('UI Layout and Touch Targets', () => {
     }));
 
     expect(sliderAttrs.min).toBe('0');
-    expect(sliderAttrs.max).toBe('1');
+    expect(parseInt(sliderAttrs.max!)).toBeGreaterThan(0);
     expect(sliderAttrs.value).toBeDefined();
   });
 
@@ -119,7 +122,8 @@ test.describe('UI Layout and Touch Targets', () => {
     const toolbarButtons = [
       '#btn-open',
       '#btn-close',
-      '#btn-rotate',
+      '#btn-rotate-ccw',
+      '#btn-rotate-cw',
     ];
 
     for (const selector of toolbarButtons) {

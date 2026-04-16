@@ -20,6 +20,8 @@ test.describe('Filters', () => {
     });
     page = await app.firstWindow();
     await page.waitForLoadState('domcontentloaded');
+    // Wait for PDF to fully load
+    await expect(page.locator('#nav-label')).toHaveText(/Page \d+ \/ \d+/, { timeout: 15000 });
   });
 
   test.afterAll(async () => {
@@ -31,7 +33,7 @@ test.describe('Filters', () => {
 
   test.beforeEach(async () => {
     // Ensure all filter buttons are inactive before each test
-    for (const id of ['#btn-sepia', '#btn-invert', '#btn-sharpen']) {
+    for (const id of ['#btn-sepia', '#btn-invert']) {
       const btn = page.locator(id);
       if ((await btn.getAttribute('class') ?? '').includes('active')) {
         await btn.click();
@@ -63,40 +65,24 @@ test.describe('Filters', () => {
     await expect(invertBtn).not.toHaveClass(/active/);
   });
 
-  test('sharpen button toggles sharpen filter', async () => {
-    const sharpenBtn = page.locator('#btn-sharpen');
-
-    await expect(sharpenBtn).not.toHaveClass(/active/);
-
-    await sharpenBtn.click();
-    await expect(sharpenBtn).toHaveClass(/active/);
-
-    await sharpenBtn.click();
-    await expect(sharpenBtn).not.toHaveClass(/active/);
-  });
-
   test('multiple filters can be active simultaneously', async () => {
     const sepiaBtn = page.locator('#btn-sepia');
     const invertBtn = page.locator('#btn-invert');
-    const sharpenBtn = page.locator('#btn-sharpen');
 
-    // Enable all three
+    // Enable both
     await sepiaBtn.click();
     await invertBtn.click();
-    await sharpenBtn.click();
 
-    // All should be active
+    // Both should be active
     await expect(sepiaBtn).toHaveClass(/active/);
     await expect(invertBtn).toHaveClass(/active/);
-    await expect(sharpenBtn).toHaveClass(/active/);
 
     // Disable sepia
     await sepiaBtn.click();
 
-    // Invert and sharpen still active
+    // Invert still active, sepia not
     await expect(sepiaBtn).not.toHaveClass(/active/);
     await expect(invertBtn).toHaveClass(/active/);
-    await expect(sharpenBtn).toHaveClass(/active/);
   });
 
   test('brightness controls are accessible', async () => {

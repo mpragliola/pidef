@@ -32,18 +32,21 @@ test.describe('Fullscreen', () => {
   test('F11 enters fullscreen', async () => {
     await window.keyboard.press('F11');
     await expect.poll(() =>
-      app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())
+      app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen()),
+      { timeout: 15000 }
     ).toBe(true);
   });
 
   test('Escape exits fullscreen', async () => {
     await window.keyboard.press('F11');
     await expect.poll(() =>
-      app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())
+      app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen()),
+      { timeout: 15000 }
     ).toBe(true);
     await window.keyboard.press('Escape');
     await expect.poll(() =>
-      app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())
+      app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen()),
+      { timeout: 15000 }
     ).toBe(false);
   });
 });

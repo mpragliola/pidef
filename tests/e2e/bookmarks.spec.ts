@@ -20,6 +20,8 @@ test.describe('Bookmark Display Modes', () => {
     });
     page = await app.firstWindow();
     await page.waitForLoadState('domcontentloaded');
+    // Wait for the PDF to fully load before tests run
+    await expect(page.locator('#nav-label')).toHaveText(/Page \d+ \/ \d+/, { timeout: 15000 });
   });
 
   test.afterAll(async () => {
@@ -30,10 +32,18 @@ test.describe('Bookmark Display Modes', () => {
   });
 
   test.beforeEach(async () => {
+    // Close overlay if open first
+    const overlay = page.locator('#bookmark-overlay');
+    if (!(await overlay.getAttribute('class') ?? '').includes('hidden')) {
+      await page.click('#bookmark-overlay-backdrop');
+      await expect(overlay).toHaveClass(/hidden/);
+    }
     // Ensure bookmark bar is hidden before each test by cycling to hidden state
     const bookmarkBar = page.locator('#bookmark-bar');
     while (!(await bookmarkBar.getAttribute('class') ?? '').includes('hidden')) {
       await page.click('#btn-toggle-bookmarks-nav');
+      // Wait for class to update after click
+      await page.waitForTimeout(50);
     }
   });
 

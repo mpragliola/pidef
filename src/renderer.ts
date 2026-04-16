@@ -1006,6 +1006,7 @@ async function closePdf() {
   clearBookmarks();
   updateUI();
   draw();
+  renderRecentFiles();
 }
 
 function updateUI() {
@@ -1603,7 +1604,6 @@ document.addEventListener("keydown", (e) => {
       goPrev();
       break;
     case "F11":
-      if (!pdfDoc) break;
       e.preventDefault();
       pidef.toggleFullscreen();
       break;
