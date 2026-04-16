@@ -3,6 +3,8 @@ import * as fs from "fs";
 export interface Bookmark {
   label: string;
   page: number; // 0-indexed
+  /** When true, a ▶ indicator is shown on the pill — signals a segue/transition point in the score */
+  segue?: boolean;
 }
 
 interface BookmarkFile {
