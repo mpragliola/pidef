@@ -1,3 +1,7 @@
+import { easeOut } from './lib/easing';
+import { halfSrcRect, toVisualDx, toVisualDy, isInBrightnessZone, visualXFrac } from './lib/pdf-geometry';
+import { extractLeadingChars, formatPillContent, findNearestBookmark } from './lib/bookmark-utils';
+
 interface FileRecord {
   path: string;
   page: number;
@@ -39,7 +43,6 @@ const SLIDE_PX = 40;
 const PRERENDER_FWD = 2;
 const HALF_PAN_MS = 100;
 
-const BRIGHTNESS_ZONE_PX = 60;
 const BRIGHTNESS_MIN = 0.1;
 const BRIGHTNESS_MAX = 1.0;
 const BRIGHTNESS_PX_PER_UNIT = 200;
@@ -325,7 +328,7 @@ if (overlay) {
 
   pills.addEventListener("pointermove", (e) => {
     if (bookmarkDisplayMode !== '1-line' || e.pointerId !== activePointerId) return;
-    const vdx = toVisualDx(e.clientX - pillsStartX, e.clientY - pillsStartY);
+    const vdx = toVisualDx(e.clientX - pillsStartX, e.clientY - pillsStartY, rotationSteps);
     if (!pillsDragCommitted && Math.abs(vdx) > PILLS_DRAG_THRESHOLD) {
       pillsDragCommitted = true;
     }
@@ -406,7 +409,7 @@ if (overlay) {
 
   overlayPills.addEventListener("pointermove", (e) => {
     if (e.pointerId !== activePointerId) return;
-    const vdy = toVisualDy(e.clientX - overlayStartX, e.clientY - overlayStartY);
+    const vdy = toVisualDy(e.clientX - overlayStartX, e.clientY - overlayStartY, rotationSteps);
     if (!overlayDragCommitted && Math.abs(vdy) > OVERLAY_DRAG_THRESHOLD) {
       overlayDragCommitted = true;
       overlayPills.setPointerCapture(e.pointerId);
@@ -491,12 +494,6 @@ pageSlider.addEventListener("input", (e) => {
   });
 });
 
-// ── Easing ───────────────────────────────────────────────────────────────────
-
-function easeOut(t: number): number {
-  return 1.0 - (1.0 - t) ** 2;
-}
-
 // ── PDF rendering ────────────────────────────────────────────────────────────
 
 async function renderPage(
@@ -552,20 +549,6 @@ async function renderPage(
   oc.drawImage(renderCanvas, cx, cy);
 
   return createImageBitmap(offscreen);
-}
-
-// Returns [srcX, srcY, srcW, srcH] of the active half within a cached surface.
-// In normal mode, returns the full surface rect.
-// Returns [srcX, srcY, srcW, srcH] of the active half within a cached surface.
-// Always top/bottom split — rotation is a CSS transform on the whole UI, not the surface.
-function halfSrcRect(half: 'top' | 'bottom'): [number, number, number, number] {
-  const w = cacheWidth;
-  const h = cacheHeight;
-  if (!halfMode) return [0, 0, w, h];
-  const fullH = h * 2;
-  return half === 'top'
-    ? [0, 0, w, fullH / 2]
-    : [0, fullH / 2, w, fullH / 2];
 }
 
 async function renderPageCached(pageIdx: number): Promise<ImageBitmap | null> {
@@ -780,7 +763,7 @@ function draw() {
 
   // ── DRAGGING / SNAP ──────────────────────────────────────────────────
   if (state === "dragging" || state === "snap") {
-    const [sx, sy, sw, sh] = halfSrcRect(halfPage);
+    const [sx, sy, sw, sh] = halfSrcRect(halfPage, halfMode, cacheWidth, cacheHeight);
     ctx.drawImage(currentSurf, sx, sy, sw, sh, dragX, 0, w, h);
     if (dragAdjDir !== 0) {
       const adjSurf = surfCache.get(currentPage + dragAdjDir);
@@ -789,7 +772,7 @@ function draw() {
         const adjHalf = halfMode
           ? (dragAdjDir === 1 ? 'top' : 'bottom')
           : 'top';
-        const [asx, asy, asw, ash] = halfSrcRect(adjHalf);
+        const [asx, asy, asw, ash] = halfSrcRect(adjHalf, halfMode, cacheWidth, cacheHeight);
         ctx.drawImage(adjSurf, asx, asy, asw, ash, dragAdjDir * w + dragX, 0, w, h);
       }
     }
@@ -803,8 +786,8 @@ function draw() {
     // animDir: +1 means going top→bottom (pan upward), -1 means bottom→top (pan downward)
     const outY = -animDir * ease * h;
     const inY = animDir * (1.0 - ease) * h;
-    const [fsx, fsy, fsw, fsh] = halfSrcRect(animDir === 1 ? 'top' : 'bottom');
-    const [csx, csy, csw, csh] = halfSrcRect(halfPage);
+    const [fsx, fsy, fsw, fsh] = halfSrcRect(animDir === 1 ? 'top' : 'bottom', halfMode, cacheWidth, cacheHeight);
+    const [csx, csy, csw, csh] = halfSrcRect(halfPage, halfMode, cacheWidth, cacheHeight);
     if (animFromSurf) {
       ctx.globalAlpha = 1.0;
       ctx.drawImage(animFromSurf, fsx, fsy, fsw, fsh, 0, outY, w, h);
@@ -819,9 +802,9 @@ function draw() {
   // ── ANIMATING (horizontal slide / page change) ───────────────────────
   if (state === "animating" && animT < 1.0) {
     const ease = easeOut(animT);
-    const [csx, csy, csw, csh] = halfSrcRect(halfPage);
+    const [csx, csy, csw, csh] = halfSrcRect(halfPage, halfMode, cacheWidth, cacheHeight);
     if (animFromSurf) {
-      const [fsx, fsy, fsw, fsh] = halfSrcRect(animFromHalf);
+      const [fsx, fsy, fsw, fsh] = halfSrcRect(animFromHalf, halfMode, cacheWidth, cacheHeight);
       ctx.globalAlpha = 1.0 - ease;
       ctx.drawImage(animFromSurf, fsx, fsy, fsw, fsh, 0, 0, w, h);
     }
@@ -834,7 +817,7 @@ function draw() {
   }
 
   // ── IDLE ─────────────────────────────────────────────────────────────
-  const [sx, sy, sw, sh] = halfSrcRect(halfPage);
+  const [sx, sy, sw, sh] = halfSrcRect(halfPage, halfMode, cacheWidth, cacheHeight);
   ctx.drawImage(currentSurf, sx, sy, sw, sh, 0, 0, w, h);
   ctx.filter = "none";
 }
@@ -1231,43 +1214,8 @@ function addBookmark(label: string, page: number): void {
   renderBookmarkBar();
 }
 
-function findNearestBookmark(): { page: number | null; index: number | null } {
-  if (bookmarks.length === 0) return { page: null, index: null };
-
-  // Find the bookmark with the largest page number that is <= currentPage
-  let nearest: { page: number; index: number } | null = null;
-  for (let i = 0; i < bookmarks.length; i++) {
-    if (bookmarks[i].page <= currentPage) {
-      if (!nearest || bookmarks[i].page > nearest.page) {
-        nearest = { page: bookmarks[i].page, index: i };
-      }
-    }
-  }
-
-  return { page: nearest?.page ?? null, index: nearest?.index ?? null };
-}
-
-function extractLeadingChars(title: string): string {
-  const match = title.match(/^(\d+[a-zA-Z]?)/);
-  return match ? match[1] : '';
-}
-
-function formatPillContent(title: string, mode: 's' | 'm' | 'l'): string {
-  switch (mode) {
-    case 's': {
-      const leading = extractLeadingChars(title);
-      return leading || '#bookmark';
-    }
-    case 'm': {
-      return title.length > 12 ? title.substring(0, 12) + '...' : title;
-    }
-    case 'l':
-      return title;
-  }
-}
-
 function updateNearestBookmark(): void {
-  const { page, index } = findNearestBookmark();
+  const { page, index } = findNearestBookmark(bookmarks, currentPage);
   nearestBookmarkPage = page;
   nearestBookmarkIndex = index;
 }
@@ -1397,47 +1345,6 @@ async function loadFile(filePath: string) {
 
 // ── Drag handling (pointer events) ───────────────────────────────────────────
 
-// Map screen-space deltas to visual (post-rotation) horizontal delta.
-// rotationSteps: 0=0°, 1=90°CW, 2=180°, 3=270°CW
-function toVisualDx(dx: number, dy: number): number {
-  switch (rotationSteps) {
-    case 1: return dy;   // 90° CW:  visual right = screen down
-    case 2: return -dx;  // 180°:    visual right = screen left
-    case 3: return -dy;  // 270° CW: visual right = screen up
-    default: return dx;
-  }
-}
-
-// Map screen-space deltas to visual vertical delta (positive = down).
-function toVisualDy(dx: number, dy: number): number {
-  switch (rotationSteps) {
-    case 1: return -dx;  // 90° CW:  visual down = screen left
-    case 2: return -dy;  // 180°:    visual down = screen up
-    case 3: return dx;   // 270° CW: visual down = screen right
-    default: return dy;
-  }
-}
-
-// Returns true if the pointer is in the brightness-control zone (visual left edge strip).
-function isInBrightnessZone(clientX: number, clientY: number): boolean {
-  switch (rotationSteps) {
-    case 1: return clientY < BRIGHTNESS_ZONE_PX;                          // visual left = screen top
-    case 2: return clientX > (cacheWidth - BRIGHTNESS_ZONE_PX);           // visual left = screen right
-    case 3: return clientY > (cacheHeight - BRIGHTNESS_ZONE_PX);          // visual left = screen bottom
-    default: return clientX < BRIGHTNESS_ZONE_PX;                         // visual left = screen left
-  }
-}
-
-// Return the visual X fraction [0..1] of a pointer position for tap-zone checks.
-function visualXFrac(clientX: number, clientY: number): number {
-  switch (rotationSteps) {
-    case 1: return clientY / cacheWidth;
-    case 2: return (cacheWidth - clientX) / cacheWidth;
-    case 3: return (cacheWidth - clientY) / cacheWidth;
-    default: return clientX / cacheWidth;
-  }
-}
-
 let pointerDown = false;
 let pointerStartX = 0;
 
@@ -1448,7 +1355,7 @@ canvas.addEventListener("pointerdown", (e) => {
   pointerStartX = e.clientX;
   pointerStartY = e.clientY;
 
-  if (isInBrightnessZone(e.clientX, e.clientY)) {
+  if (isInBrightnessZone(e.clientX, e.clientY, rotationSteps, cacheWidth, cacheHeight)) {
     inBrightnessDrag = true;
     brightnessAtDragStart = brightness;
     if (brightnessHideTimer) clearTimeout(brightnessHideTimer);
@@ -1470,7 +1377,7 @@ canvas.addEventListener("pointermove", (e) => {
     const screenDx = e.clientX - pointerStartX;
     const screenDy = e.clientY - pointerStartY;
     // Visual upward motion increases brightness; negate visualDy (positive=down) to get delta.
-    const delta = -toVisualDy(screenDx, screenDy);
+    const delta = -toVisualDy(screenDx, screenDy, rotationSteps);
     brightness = Math.max(BRIGHTNESS_MIN, Math.min(BRIGHTNESS_MAX,
       brightnessAtDragStart + delta / BRIGHTNESS_PX_PER_UNIT));
     applyBrightness();
@@ -1479,7 +1386,7 @@ canvas.addEventListener("pointermove", (e) => {
   }
 
   if (!pointerDown || state !== "dragging" || dragCommitted) return;
-  const dx = toVisualDx(e.clientX - pointerStartX, e.clientY - pointerStartY);
+  const dx = toVisualDx(e.clientX - pointerStartX, e.clientY - pointerStartY, rotationSteps);
   dragX = dx;
   if (dx < -5) dragAdjDir = 1;
   else if (dx > 5) dragAdjDir = -1;
@@ -1531,9 +1438,9 @@ canvas.addEventListener("pointerup", (e) => {
   }
 
   if (!dragCommitted) {
-    const moved = Math.abs(toVisualDx(e.clientX - pointerStartX, e.clientY - pointerStartY));
+    const moved = Math.abs(toVisualDx(e.clientX - pointerStartX, e.clientY - pointerStartY, rotationSteps));
     if (moved < TAP_MAX_MOVE) {
-      const xFrac = visualXFrac(pointerStartX, pointerStartY);
+      const xFrac = visualXFrac(pointerStartX, pointerStartY, rotationSteps, cacheWidth);
       if (xFrac < TAP_ZONE) {
         cancelAll();
         goPrev();
