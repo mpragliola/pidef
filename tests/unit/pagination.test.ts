@@ -125,8 +125,8 @@ describe('Page Navigation', () => {
 
   describe('slider synchronization', () => {
     it('converts page number to slider value (0-1)', () => {
-      const currentPage = 5;
-      const nPages = 10;
+      const currentPage = 4;
+      const nPages = 9;
       const sliderValue = nPages > 1 ? currentPage / (nPages - 1) : 0;
       expect(sliderValue).toBe(0.5);
     });
