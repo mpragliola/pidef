@@ -14,6 +14,11 @@
  */
 
 import React, { useRef } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faBackwardStep, faChevronLeft, faChevronRight, faForwardStep,
+  faSun, faCircleHalfStroke, faTableColumns, faBookmark,
+} from '@fortawesome/free-solid-svg-icons';
 import { useAppContext } from '../AppContext';
 
 /**
@@ -118,10 +123,10 @@ export function NavBar() {
     <div id="nav-bar">
       <div id="nav-left">
         <button id="btn-first" title="First page" disabled={disabled} onClick={goFirst}>
-          <i className="fa-solid fa-backward-step" />
+          <FontAwesomeIcon icon={faBackwardStep} />
         </button>
         <button id="btn-prev" title="Previous page" disabled={disabled} onClick={goPrev}>
-          <i className="fa-solid fa-chevron-left" />
+          <FontAwesomeIcon icon={faChevronLeft} />
         </button>
       </div>
       <div id="nav-center">
@@ -147,10 +152,10 @@ export function NavBar() {
       </div>
       <div id="nav-right">
         <button id="btn-next" title="Next page" disabled={disabled} onClick={goNext}>
-          <i className="fa-solid fa-chevron-right" />
+          <FontAwesomeIcon icon={faChevronRight} />
         </button>
         <button id="btn-last" title="Last page" disabled={disabled} onClick={goLast}>
-          <i className="fa-solid fa-forward-step" />
+          <FontAwesomeIcon icon={faForwardStep} />
         </button>
         <button
           id="btn-sepia"
@@ -159,7 +164,7 @@ export function NavBar() {
           className={sepiaEnabled ? 'active' : ''}
           onClick={toggleSepia}
         >
-          <i className="fa-solid fa-sun" />
+          <FontAwesomeIcon icon={faSun} />
         </button>
         <button
           id="btn-invert"
@@ -168,7 +173,7 @@ export function NavBar() {
           className={invertEnabled ? 'active' : ''}
           onClick={toggleInvert}
         >
-          <i className="fa-solid fa-circle-half-stroke" />
+          <FontAwesomeIcon icon={faCircleHalfStroke} />
         </button>
         <button
           id="btn-half"
@@ -177,7 +182,7 @@ export function NavBar() {
           className={halfMode ? 'active' : ''}
           onClick={toggleHalfMode}
         >
-          <i className="fa-solid fa-table-columns" />
+          <FontAwesomeIcon icon={faTableColumns} />
         </button>
         <button
           id="btn-toggle-bookmarks-nav"
@@ -188,7 +193,7 @@ export function NavBar() {
           onPointerCancel={handleBookmarkPointerUp}
           onClick={handleBookmarkClick}
         >
-          <i className="fa-solid fa-bookmark" />
+          <FontAwesomeIcon icon={faBookmark} />
         </button>
       </div>
     </div>

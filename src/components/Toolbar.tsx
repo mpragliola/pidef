@@ -12,6 +12,10 @@
  */
 
 import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faFolderOpen, faXmark, faRotateLeft, faRotateRight, faExpand,
+} from '@fortawesome/free-solid-svg-icons';
 import { useAppContext } from '../AppContext';
 import { findNearestBookmark } from '../lib/bookmark-utils';
 
@@ -49,11 +53,11 @@ export function Toolbar() {
         `dialog.showOpenDialog` API is only available there.
       */}
       <button id="btn-open" title="Open PDF" onClick={() => pidef.openFileDialog()}>
-        <i className="fa-solid fa-folder-open" />
+        <FontAwesomeIcon icon={faFolderOpen} />
       </button>
 
       <button id="btn-close" title="Close PDF" disabled={!pdfDoc} onClick={closePdf}>
-        <i className="fa-solid fa-xmark" />
+        <FontAwesomeIcon icon={faXmark} />
       </button>
 
       {/* Bookmark-derived section title; empty string renders as nothing. */}
@@ -66,7 +70,7 @@ export function Toolbar() {
         className={rotationSteps !== 0 ? 'active' : ''}
         onClick={() => rotate('ccw')}
       >
-        <i className="fa-solid fa-rotate-left" />
+        <FontAwesomeIcon icon={faRotateLeft} />
       </button>
       <button
         id="btn-rotate-cw"
@@ -75,7 +79,7 @@ export function Toolbar() {
         className={rotationSteps !== 0 ? 'active' : ''}
         onClick={() => rotate('cw')}
       >
-        <i className="fa-solid fa-rotate-right" />
+        <FontAwesomeIcon icon={faRotateRight} />
       </button>
 
       {/*
@@ -91,7 +95,7 @@ export function Toolbar() {
         title="Fullscreen F11"
         onClick={() => pidef.toggleFullscreen()}
       >
-        <i className="fa-solid fa-expand" />
+        <FontAwesomeIcon icon={faExpand} />
       </button>
     </div>
   );
