@@ -5,6 +5,9 @@ import { useAppContext } from './AppContext';
 import { useIpc } from './hooks/useIpc';
 import { Toolbar } from './components/Toolbar';
 import { NavBar } from './components/NavBar';
+import { BookmarkBar } from './components/BookmarkBar';
+import { BookmarkOverlay } from './components/BookmarkOverlay';
+import { BookmarkEditModal } from './components/BookmarkEditModal';
 
 function AppInner() {
   useIpc();
@@ -20,6 +23,9 @@ function AppInner() {
   return (
     <>
       <Toolbar />
+      <BookmarkOverlay />
+      <BookmarkEditModal />
+      <BookmarkBar />
       <NavBar />
     </>
   );
