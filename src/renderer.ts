@@ -119,18 +119,22 @@ document.getElementById("btn-close")!.addEventListener("click", () => {
 });
 
 document.getElementById("btn-sepia")!.addEventListener("click", () => {
+  if (!pdfDoc) return;
   toggleSepia();
 });
 
 document.getElementById("btn-invert")!.addEventListener("click", () => {
+  if (!pdfDoc) return;
   toggleInvert();
 });
 
 document.getElementById("btn-sharpen")!.addEventListener("click", () => {
+  if (!pdfDoc) return;
   toggleSharpen();
 });
 
 document.getElementById("btn-rotate-cw")!.addEventListener("click", () => {
+  if (!pdfDoc) return;
   rotationSteps = (rotationSteps + 1) % 4;
   localStorage.setItem("pidef-rotation", rotationSteps.toString());
   applyUiRotation();
@@ -143,6 +147,7 @@ document.getElementById("btn-rotate-cw")!.addEventListener("click", () => {
 });
 
 document.getElementById("btn-rotate-ccw")!.addEventListener("click", () => {
+  if (!pdfDoc) return;
   rotationSteps = (rotationSteps + 3) % 4; // +3 is same as -1 mod 4
   localStorage.setItem("pidef-rotation", rotationSteps.toString());
   applyUiRotation();
@@ -160,6 +165,7 @@ document.getElementById("btn-fullscreen")!.addEventListener("click", () => {
 
 /// Bookmarks button: cycle through display modes (hidden → 1-line → all → hidden)
 const bookmarksButtonClickHandler = () => {
+  if (!pdfDoc) return;
   const modes: ('hidden' | '1-line' | 'all')[] = ['hidden', '1-line', 'all'];
   const currentIndex = modes.indexOf(bookmarkDisplayMode as any);
   bookmarkDisplayMode = modes[(currentIndex + 1) % modes.length];
@@ -249,18 +255,22 @@ document.getElementById("btn-add-bookmark")!.addEventListener("click", () => {
 });
 
 document.getElementById("btn-first")!.addEventListener("click", () => {
+  if (!pdfDoc) return;
   goFirst();
 });
 
 document.getElementById("btn-prev")!.addEventListener("click", () => {
+  if (!pdfDoc) return;
   goPrev();
 });
 
 document.getElementById("btn-next")!.addEventListener("click", () => {
+  if (!pdfDoc) return;
   goNext();
 });
 
 document.getElementById("btn-last")!.addEventListener("click", () => {
+  if (!pdfDoc) return;
   goLast();
 });
 
