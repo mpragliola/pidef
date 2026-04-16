@@ -263,6 +263,49 @@ if (overlay) {
 }
 
 
+// ── 1-line bookmark bar manual scroll (rotation-aware) ───────────────────────
+// Native overflow-x scroll doesn't work when the body is CSS-rotated 90°/270°
+// because the browser resolves gestures in screen space, not transformed space.
+// We drive scrollLeft manually using toVisualDx() which maps screen→visual coords.
+// No setPointerCapture — that was causing scroll-on-release. We just track the
+// active pointer id and follow its events as they bubble up from pill children.
+{
+  const pills = document.getElementById("bookmark-pills")!;
+  let activePointerId: number | null = null;
+  let pillsStartX = 0;
+  let pillsStartY = 0;
+  let pillsStartScrollLeft = 0;
+  let pillsDragCommitted = false;
+  const PILLS_DRAG_THRESHOLD = 8;
+
+  pills.addEventListener("pointerdown", (e) => {
+    if (bookmarkDisplayMode !== '1-line') return;
+    activePointerId = e.pointerId;
+    pillsDragCommitted = false;
+    pillsStartX = e.clientX;
+    pillsStartY = e.clientY;
+    pillsStartScrollLeft = pills.scrollLeft;
+  });
+
+  pills.addEventListener("pointermove", (e) => {
+    if (bookmarkDisplayMode !== '1-line' || e.pointerId !== activePointerId) return;
+    const vdx = toVisualDx(e.clientX - pillsStartX, e.clientY - pillsStartY);
+    if (!pillsDragCommitted && Math.abs(vdx) > PILLS_DRAG_THRESHOLD) {
+      pillsDragCommitted = true;
+    }
+    if (pillsDragCommitted) {
+      pills.scrollLeft = pillsStartScrollLeft - vdx;
+      e.stopPropagation();
+    }
+  });
+
+  const endDrag = (e: PointerEvent) => {
+    if (e.pointerId === activePointerId) activePointerId = null;
+  };
+  pills.addEventListener("pointerup", endDrag);
+  pills.addEventListener("pointercancel", endDrag);
+}
+
 document.getElementById("btn-add-bookmark")!.addEventListener("click", () => {
   if (!pdfDoc) return;
   const existing = bookmarks.find((b) => b.page === currentPage);

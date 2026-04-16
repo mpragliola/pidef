@@ -616,6 +616,7 @@ button {
     overflow-x: auto;
     overflow-y: hidden;
     scroll-behavior: smooth;
+    touch-action: none;
 
     /* Show scrollbar */
     scrollbar-width: thin;
