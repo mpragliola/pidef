@@ -6,7 +6,7 @@ test.describe('App smoke', () => {
   let app: ElectronApplication;
   let window: Page;
 
-  test.beforeEach(async () => {
+  test.beforeAll(async () => {
     app = await electron.launch({
       args: [path.resolve('dist/main.js')],
     });
@@ -14,7 +14,7 @@ test.describe('App smoke', () => {
     await window.waitForLoadState('domcontentloaded');
   });
 
-  test.afterEach(async () => {
+  test.afterAll(async () => {
     await app.close();
   });
 

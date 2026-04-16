@@ -10,7 +10,7 @@ test.describe('Bookmark Display Modes', () => {
   let page: Page;
   let testPdfPath: string;
 
-  test.beforeEach(async () => {
+  test.beforeAll(async () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pidef-test-'));
     testPdfPath = path.join(tmpDir, 'test.pdf');
     await generatePDF(testPdfPath, 5); // 5 page PDF
@@ -22,10 +22,18 @@ test.describe('Bookmark Display Modes', () => {
     await page.waitForLoadState('domcontentloaded');
   });
 
-  test.afterEach(async () => {
+  test.afterAll(async () => {
     await app.close();
     if (fs.existsSync(testPdfPath)) {
       fs.unlinkSync(testPdfPath);
+    }
+  });
+
+  test.beforeEach(async () => {
+    // Ensure bookmark bar is hidden before each test by cycling to hidden state
+    const bookmarkBar = page.locator('#bookmark-bar');
+    while (!(await bookmarkBar.getAttribute('class') ?? '').includes('hidden')) {
+      await page.click('#btn-toggle-bookmarks-nav');
     }
   });
 

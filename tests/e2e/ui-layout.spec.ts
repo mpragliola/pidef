@@ -10,7 +10,7 @@ test.describe('UI Layout and Touch Targets', () => {
   let page: Page;
   let testPdfPath: string;
 
-  test.beforeEach(async () => {
+  test.beforeAll(async () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pidef-test-'));
     testPdfPath = path.join(tmpDir, 'test.pdf');
     await generatePDF(testPdfPath, 10);
@@ -22,10 +22,24 @@ test.describe('UI Layout and Touch Targets', () => {
     await page.waitForLoadState('domcontentloaded');
   });
 
-  test.afterEach(async () => {
+  test.afterAll(async () => {
     await app.close();
     if (fs.existsSync(testPdfPath)) {
       fs.unlinkSync(testPdfPath);
+    }
+  });
+
+  test.beforeEach(async () => {
+    // Close overlay if open, and reset bookmark bar to hidden
+    const overlay = page.locator('#bookmark-overlay');
+    const isOverlayHidden = (await overlay.getAttribute('class') ?? '').includes('hidden');
+    if (!isOverlayHidden) {
+      const backdrop = page.locator('#bookmark-overlay-backdrop');
+      await backdrop.click();
+    }
+    const bookmarkBar = page.locator('#bookmark-bar');
+    while (!(await bookmarkBar.getAttribute('class') ?? '').includes('hidden')) {
+      await page.click('#btn-toggle-bookmarks-nav');
     }
   });
 

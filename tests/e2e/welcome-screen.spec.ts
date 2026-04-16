@@ -6,7 +6,7 @@ test.describe('Welcome Screen and Recent Files', () => {
   let app: ElectronApplication;
   let page: Page;
 
-  test.beforeEach(async () => {
+  test.beforeAll(async () => {
     app = await electron.launch({
       args: [path.resolve('dist/main.js')],
     });
@@ -14,7 +14,7 @@ test.describe('Welcome Screen and Recent Files', () => {
     await page.waitForLoadState('domcontentloaded');
   });
 
-  test.afterEach(async () => {
+  test.afterAll(async () => {
     await app.close();
   });
 

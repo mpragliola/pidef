@@ -6,7 +6,7 @@ test.describe('Fullscreen', () => {
   let app: ElectronApplication;
   let window: Page;
 
-  test.beforeEach(async () => {
+  test.beforeAll(async () => {
     app = await electron.launch({
       args: [path.resolve('dist/main.js')],
     });
@@ -14,33 +14,36 @@ test.describe('Fullscreen', () => {
     await window.waitForLoadState('domcontentloaded');
   });
 
-  test.afterEach(async () => {
-    // Ensure we exit fullscreen before closing so the window tears down cleanly
+  test.afterAll(async () => {
+    await app.close();
+  });
+
+  test.beforeEach(async () => {
+    // Ensure we start each test in non-fullscreen state
     await app.evaluate(({ BrowserWindow }) => {
       const win = BrowserWindow.getAllWindows()[0];
       if (win.isFullScreen()) win.setFullScreen(false);
     });
-    await app.close();
+    await expect.poll(() =>
+      app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())
+    ).toBe(false);
   });
 
   test('F11 enters fullscreen', async () => {
     await window.keyboard.press('F11');
-    // Give the IPC round-trip and OS fullscreen animation time to complete
-    await window.waitForTimeout(1000);
-    const isFullscreen = await app.evaluate(({ BrowserWindow }) =>
-      BrowserWindow.getAllWindows()[0].isFullScreen()
-    );
-    expect(isFullscreen).toBe(true);
+    await expect.poll(() =>
+      app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())
+    ).toBe(true);
   });
 
   test('Escape exits fullscreen', async () => {
     await window.keyboard.press('F11');
-    await window.waitForTimeout(1000);
+    await expect.poll(() =>
+      app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())
+    ).toBe(true);
     await window.keyboard.press('Escape');
-    await window.waitForTimeout(1000);
-    const isFullscreen = await app.evaluate(({ BrowserWindow }) =>
-      BrowserWindow.getAllWindows()[0].isFullScreen()
-    );
-    expect(isFullscreen).toBe(false);
+    await expect.poll(() =>
+      app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())
+    ).toBe(false);
   });
 });

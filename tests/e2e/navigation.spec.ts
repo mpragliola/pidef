@@ -9,7 +9,7 @@ test.describe('Navigation', () => {
   let window: Page;
   let pdfPath: string;
 
-  test.beforeEach(async () => {
+  test.beforeAll(async () => {
     pdfPath = await generateTestPdf(3);
     app = await electron.launch({
       args: [path.resolve('dist/main.js')],
@@ -17,20 +17,24 @@ test.describe('Navigation', () => {
     window = await app.firstWindow();
     await window.waitForLoadState('domcontentloaded');
 
-    // Open the PDF by sending the IPC message from the main process
     await app.evaluate(({ BrowserWindow }, filePath) => {
       BrowserWindow.getAllWindows()[0].webContents.send('open-file', filePath);
     }, pdfPath);
 
-    // Wait for the PDF to finish loading
     await expect(window.locator('#page-label')).toHaveText('Page 1 / 3', {
       timeout: 15000,
     });
   });
 
-  test.afterEach(async () => {
+  test.afterAll(async () => {
     await app.close();
     fs.unlinkSync(pdfPath);
+  });
+
+  test.beforeEach(async () => {
+    // Reset to page 1 before each test
+    await window.click('#btn-first');
+    await expect(window.locator('#page-label')).toHaveText('Page 1 / 3');
   });
 
   test('page label shows page 1 of 3 after opening', async () => {
