@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 
-// Pure implementation of the remap logic — copy this exactly from what
-// will be added to renderer.ts, so tests run without DOM dependencies.
+// Pure equivalent of remapHalfOnRotation from renderer.ts for testability.
+// The renderer version closes over and mutates module-level state; this version
+// takes all inputs as parameters and returns a new object — same logic, no DOM deps.
 function remapHalfOnRotation(
   prevSteps: number,
   delta: 1 | -1,
