@@ -723,6 +723,8 @@ button {
     flex: 1;
     text-align: center;
     font-weight: $font-weight-semibold;
+    font-size: $font-size-xl;
+    color: var(--theme-text-primary);
     color: var(--theme-text-primary);
   }
 }
