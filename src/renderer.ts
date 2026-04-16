@@ -1,6 +1,7 @@
 interface FileRecord {
   path: string;
   page: number;
+  halfMode?: boolean;
 }
 
 interface Bookmark {
@@ -17,6 +18,7 @@ interface PidefAPI {
   getRecentFiles: () => Promise<FileRecord[]>;
   addRecentFile: (path: string, page?: number) => Promise<void>;
   updateFilePage: (path: string, page: number) => Promise<void>;
+  updateFileHalfMode: (path: string, halfMode: boolean) => Promise<void>;
   readBookmarks: (pdfPath: string) => Promise<Bookmark[]>;
   writeBookmarks: (pdfPath: string, bookmarks: Bookmark[]) => Promise<void>;
   onOpenFile: (cb: (path: string) => void) => void;
@@ -137,6 +139,11 @@ document.getElementById("btn-invert")!.addEventListener("click", () => {
 document.getElementById("btn-sharpen")!.addEventListener("click", () => {
   if (!pdfDoc) return;
   toggleSharpen();
+});
+
+document.getElementById("btn-half")!.addEventListener("click", () => {
+  if (!pdfDoc) return;
+  toggleHalfMode();
 });
 
 document.getElementById("btn-rotate-cw")!.addEventListener("click", () => {
@@ -666,6 +673,31 @@ function toggleSharpen() {
   applyFilters();
 }
 
+function toggleHalfMode() {
+  halfMode = !halfMode;
+  halfPage = 'top';
+  const btn = document.getElementById("btn-half")!;
+  btn.classList.toggle("active", halfMode);
+  // Clear cache — render dimensions change
+  surfCache.clear();
+  rendering.clear();
+  currentSurf = null;
+  animFromSurf = null;
+  // Persist to file record
+  if (currentFilePath && pdfDoc) {
+    pidef.updateFileHalfMode(currentFilePath, halfMode);
+  }
+  // Re-render current page at new dimensions
+  if (pdfDoc && cacheWidth > 0 && cacheHeight > 0) {
+    renderPage(currentPage, cacheWidth, cacheHeight).then((bmp) => {
+      surfCache.set(currentPage, bmp);
+      currentSurf = bmp;
+      bgScan();
+      draw();
+    });
+  }
+}
+
 function applyUiRotation() {
   document.body.classList.remove("rotate-90", "rotate-180", "rotate-270");
   if (rotationSteps === 1) document.body.classList.add("rotate-90");
@@ -921,6 +953,10 @@ async function closePdf() {
   currentSurf = null;
   animFromSurf = null;
   surfCache.clear();
+  halfMode = false;
+  halfPage = 'top';
+  const halfBtn = document.getElementById("btn-half");
+  if (halfBtn) halfBtn.classList.remove("active");
   rendering.clear();
   clearBookmarks();
   updateUI();
@@ -931,7 +967,7 @@ function updateUI() {
   const disableButtons = (disabled: boolean) => {
     const buttonIds = [
       'btn-close', 'btn-first', 'btn-prev', 'btn-next', 'btn-last',
-      'btn-save', 'btn-sepia', 'btn-invert', 'btn-sharpen',
+      'btn-save', 'btn-sepia', 'btn-invert', 'btn-sharpen', 'btn-half',
       'btn-rotate-cw', 'btn-rotate-ccw', 'btn-fullscreen', 'btn-toggle-bookmarks-nav',
       'btn-add-bookmark', 'btn-width-control', 'btn-title-toggle'
     ];
@@ -1306,6 +1342,10 @@ async function loadFile(filePath: string) {
   const recentFiles = await pidef.getRecentFiles();
   const fileRecord = recentFiles.find((f) => f.path === filePath);
   currentPage = fileRecord ? Math.min(fileRecord.page, nPages - 1) : 0;
+  halfMode = fileRecord?.halfMode ?? false;
+  halfPage = 'top';
+  const halfBtn = document.getElementById("btn-half");
+  if (halfBtn) halfBtn.classList.toggle("active", halfMode);
 
   console.log(`[pidef] loaded ${nPages} pages, resuming at page ${currentPage + 1}`);
 
