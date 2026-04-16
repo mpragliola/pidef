@@ -151,7 +151,7 @@ document.getElementById("btn-rotate-cw")!.addEventListener("click", () => {
   rotationSteps = (rotationSteps + 1) % 4;
   localStorage.setItem("pidef-rotation", rotationSteps.toString());
   applyUiRotation();
-  if (rotationSteps === 2 || rotationSteps === 0) {
+  if (rotationSteps === 2 || rotationSteps === 0 || halfMode) {
     surfCache.clear();
     rendering.clear();
     currentSurf = null;
@@ -164,7 +164,7 @@ document.getElementById("btn-rotate-ccw")!.addEventListener("click", () => {
   rotationSteps = (rotationSteps + 3) % 4; // +3 is same as -1 mod 4
   localStorage.setItem("pidef-rotation", rotationSteps.toString());
   applyUiRotation();
-  if (rotationSteps === 2 || rotationSteps === 0) {
+  if (rotationSteps === 2 || rotationSteps === 0 || halfMode) {
     surfCache.clear();
     rendering.clear();
     currentSurf = null;

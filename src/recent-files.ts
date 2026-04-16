@@ -47,8 +47,9 @@ export function addRecentFile(
   dataDir: string
 ): void {
   let files = loadRecentFiles(dataDir);
+  const existing = files.find((f) => f.path === filePath);
   files = files.filter((f) => f.path !== filePath);
-  files.unshift({ path: filePath, page });
+  files.unshift({ path: filePath, page, halfMode: existing?.halfMode });
   files = files.slice(0, RECENT_FILES_MAX);
   saveRecentFiles(files, dataDir);
 }
