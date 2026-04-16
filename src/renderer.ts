@@ -833,28 +833,64 @@ async function beginPageChange(direction: number, adjSurf?: ImageBitmap | null) 
   }
 }
 
+function beginHalfChange(direction: 1 | -1) {
+  // direction: +1 = top→bottom, -1 = bottom→top
+  cancelAll();
+  animFromSurf = currentSurf; // same page, already cached
+  halfPage = direction === 1 ? 'bottom' : 'top';
+  // currentSurf stays the same cached bitmap; draw() clips to new halfPage
+  animDir = direction;
+  animMs = HALF_PAN_MS;
+  state = 'half-pan';
+  startTick();
+  updateUI();
+}
+
 function goNext() {
-  if (!pdfDoc || currentPage >= nPages - 1) return;
+  if (!pdfDoc) return;
+  if (halfMode && halfPage === 'top') {
+    beginHalfChange(1);
+    return;
+  }
+  if (currentPage >= nPages - 1) return;
+  if (halfMode) halfPage = 'top';
   beginPageChange(1);
 }
 
 function goPrev() {
-  if (!pdfDoc || currentPage <= 0) return;
+  if (!pdfDoc) return;
+  if (halfMode && halfPage === 'bottom') {
+    beginHalfChange(-1);
+    return;
+  }
+  if (currentPage <= 0) return;
+  if (halfMode) halfPage = 'bottom';
   beginPageChange(-1);
 }
 
 function goFirst() {
-  if (!pdfDoc || currentPage === 0) return;
+  if (!pdfDoc) return;
+  if (halfMode && halfPage !== 'top') {
+    halfPage = 'top';
+    draw();
+  }
+  if (currentPage === 0) return;
   goToPage(0);
 }
 
 function goLast() {
-  if (!pdfDoc || currentPage === nPages - 1) return;
+  if (!pdfDoc) return;
+  if (halfMode && halfPage !== 'top') {
+    halfPage = 'top';
+    draw();
+  }
+  if (currentPage === nPages - 1) return;
   goToPage(nPages - 1);
 }
 
 async function goToPage(pageIdx: number) {
   if (!pdfDoc || pageIdx < 0 || pageIdx >= nPages || pageIdx === currentPage) return;
+  if (halfMode) halfPage = 'top';
   const direction = pageIdx > currentPage ? 1 : -1;
   cancelAll();
   animFromSurf = currentSurf;
@@ -1386,18 +1422,27 @@ canvas.addEventListener("pointermove", (e) => {
 
   if (Math.abs(dx) >= THRESHOLD_PX) {
     const direction = dx < 0 ? 1 : -1;
-    const canGo =
-      (direction === 1 && currentPage < nPages - 1) ||
-      (direction === -1 && currentPage > 0);
     dragCommitted = true;
-    if (canGo) {
-      const adjSurf = surfCache.get(currentPage + direction) ?? null;
-      state = "idle";
-      dragX = 0;
-      dragAdjDir = 0;
-      beginPageChange(direction, adjSurf);
+    state = "idle";
+    dragX = 0;
+    dragAdjDir = 0;
+    // In half mode: check if the swipe goes to the other half of this page
+    if (halfMode && direction === 1 && halfPage === 'top') {
+      beginHalfChange(1);
+    } else if (halfMode && direction === -1 && halfPage === 'bottom') {
+      beginHalfChange(-1);
     } else {
-      doDragCancel();
+      // Page change
+      const canGo =
+        (direction === 1 && currentPage < nPages - 1) ||
+        (direction === -1 && currentPage > 0);
+      if (canGo) {
+        if (halfMode) halfPage = direction === 1 ? 'top' : 'bottom';
+        const adjSurf = surfCache.get(currentPage + direction) ?? null;
+        beginPageChange(direction, adjSurf);
+      } else {
+        doDragCancel();
+      }
     }
     return;
   }
