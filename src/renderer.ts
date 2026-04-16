@@ -717,6 +717,20 @@ async function closePdf() {
 }
 
 function updateUI() {
+  const disableButtons = (disabled: boolean) => {
+    const buttonIds = [
+      'btn-close', 'btn-first', 'btn-prev', 'btn-next', 'btn-last',
+      'btn-save', 'btn-sepia', 'btn-invert', 'btn-sharpen',
+      'btn-rotate-cw', 'btn-rotate-ccw', 'btn-fullscreen', 'btn-toggle-bookmarks-nav'
+    ];
+    buttonIds.forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) (btn as HTMLButtonElement).disabled = disabled;
+    });
+    const slider = document.getElementById('page-slider') as HTMLInputElement;
+    if (slider) slider.disabled = disabled;
+  };
+
   if (pdfDoc) {
     const text = `Page ${currentPage + 1} / ${nPages}`;
     pageLabel.textContent = text;
@@ -725,12 +739,14 @@ function updateUI() {
     pageSlider.value = String(currentPage);
     welcomeScreen.style.display = "none";
     document.title = `pidef`;
+    disableButtons(false);
   } else {
     pageLabel.textContent = "";
     navLabel.textContent = "";
     pageSlider.max = "1";
     pageSlider.value = "0";
     welcomeScreen.style.display = "";
+    disableButtons(true);
   }
   updateNearestBookmark();
   renderTopBar();
