@@ -608,6 +608,7 @@ button {
     overflow-x: auto;
     overflow-y: hidden;
     scroll-behavior: smooth;
+    touch-action: none; /* manual scroll via JS so rotation transforms are respected */
 
     /* Show scrollbar */
     scrollbar-width: thin;
