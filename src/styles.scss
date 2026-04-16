@@ -656,7 +656,7 @@ button {
   bottom: 0;
   display: flex;
   z-index: 999;
-  pointer-events: none;
+  pointer-events: auto;
 
   &.hidden {
     display: none;

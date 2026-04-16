@@ -731,7 +731,8 @@ function updateUI() {
     const buttonIds = [
       'btn-close', 'btn-first', 'btn-prev', 'btn-next', 'btn-last',
       'btn-save', 'btn-sepia', 'btn-invert', 'btn-sharpen',
-      'btn-rotate-cw', 'btn-rotate-ccw', 'btn-fullscreen', 'btn-toggle-bookmarks-nav'
+      'btn-rotate-cw', 'btn-rotate-ccw', 'btn-fullscreen', 'btn-toggle-bookmarks-nav',
+      'btn-add-bookmark', 'btn-width-control', 'btn-title-toggle'
     ];
     buttonIds.forEach(id => {
       const btn = document.getElementById(id);
