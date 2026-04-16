@@ -288,6 +288,10 @@ if (overlay) {
     const vdx = toVisualDx(e.clientX - pillsStartX, e.clientY - pillsStartY);
     if (!pillsDragCommitted && Math.abs(vdx) > PILLS_DRAG_THRESHOLD) {
       pillsDragCommitted = true;
+      // Disarm any pill that was armed before the drag started
+      pills.querySelectorAll<HTMLElement>(".bookmark-pill.armed").forEach(p => {
+        (p as any)._disarm?.();
+      });
     }
     if (pillsDragCommitted) {
       pills.scrollLeft = pillsStartScrollLeft - vdx;
@@ -898,24 +902,23 @@ function renderBookmarkBar(): void {
       }
     }
 
-    // Long-press (500ms) opens edit modal
-    let longPressTimer: ReturnType<typeof setTimeout> | null = null;
-    const startLongPress = () => {
-      longPressTimer = setTimeout(() => {
-        openBookmarkEditModal(bm);
-      }, 500);
+    // Double-tap to edit: first tap arms the pill, second tap opens edit modal.
+    let armedTimer: ReturnType<typeof setTimeout> | null = null;
+    const disarm = () => {
+      pill.classList.remove("armed");
+      if (armedTimer) { clearTimeout(armedTimer); armedTimer = null; }
     };
-    const cancelLongPress = () => {
-      if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-    };
-    pill.addEventListener("pointerdown", startLongPress);
-    pill.addEventListener("pointerup", cancelLongPress);
-    pill.addEventListener("pointercancel", cancelLongPress);
-    pill.addEventListener("pointermove", cancelLongPress);
+    (pill as any)._disarm = disarm; // expose so scroll handler can cancel it
 
-    // Click handler
     pill.addEventListener("click", () => {
-      goToPage(bm.page);
+      if (pill.classList.contains("armed")) {
+        disarm();
+        openBookmarkEditModal(bm);
+      } else {
+        pill.classList.add("armed");
+        armedTimer = setTimeout(disarm, 800);
+        goToPage(bm.page);
+      }
     });
 
     pills.appendChild(pill);

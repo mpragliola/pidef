@@ -391,10 +391,18 @@ button {
   white-space: nowrap;
   cursor: pointer;
   flex-shrink: 0;
+  transition: transform 120ms ease-out, background 120ms ease-out;
 
   &.highlighted {
     background: var(--theme-button-active);
     border-color: var(--theme-text-secondary);
+  }
+
+  &.armed {
+    transform: scale(1.15);
+    background: #e67e22;
+    color: #fff;
+    outline: 2px solid #c0622a;
   }
 
 }
