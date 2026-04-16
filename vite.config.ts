@@ -4,13 +4,11 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  root: path.resolve(__dirname, 'src'),
   base: './',
   build: {
-    outDir: 'dist',
+    outDir: path.resolve(__dirname, 'dist'),
     emptyOutDir: false,
-    rollupOptions: {
-      input: path.resolve(__dirname, 'src/index.html'),
-    },
     target: 'chrome120',
   },
   resolve: {
