@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { AppProvider } from './AppProvider';
 import { useAppContext } from './AppContext';
 import { useIpc } from './hooks/useIpc';
+import { Toolbar } from './components/Toolbar';
 
 function AppInner() {
   useIpc();
@@ -16,9 +17,9 @@ function AppInner() {
   }, [rotationSteps]);
 
   return (
-    <div style={{ color: 'white', padding: 16, fontFamily: 'system-ui' }}>
-      React scaffold ready. Components coming in Phase 4.
-    </div>
+    <>
+      <Toolbar />
+    </>
   );
 }
 
