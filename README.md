@@ -21,28 +21,6 @@ pidef flips that: it's **touch-first from the ground up**, optimized for Ubuntu 
 - **Keyboard fallback** — Arrow keys, Page Up/Down, and Space for alternative input
 - **Minimal codebase** — ~500 lines of TypeScript; easy to understand and modify
 
-## Screenshots
-
-| Welcome screen | PDF open |
-|:---:|:---:|
-| ![Welcome screen](docs/screenshots/01-welcome.png) | ![PDF open](docs/screenshots/02-pdf-open.png) |
-
-| Half-page mode | Rotated 90° |
-|:---:|:---:|
-| ![Half-page mode](docs/screenshots/03-half-mode.png) | ![Rotated 90°](docs/screenshots/10-rotated.png) |
-
-| Sepia filter | Inverted |
-|:---:|:---:|
-| ![Sepia filter](docs/screenshots/08-sepia.png) | ![Inverted](docs/screenshots/09-invert.png) |
-
-**Bookmark bar** (small / medium / large width):
-
-![Bookmarks small](docs/screenshots/04-bookmarks-s.png)
-![Bookmarks medium](docs/screenshots/05-bookmarks-m.png)
-![Bookmarks large](docs/screenshots/06-bookmarks-l.png)
-
-![Bookmark overlay](docs/screenshots/07-bookmarks-overlay.png)
-
 ## Quick Start
 
 ```bash
@@ -58,6 +36,10 @@ npm run build && npx electron dist/main.js path/to/file.pdf
 
 Or use **Ctrl+O** to open a file dialog inside the app.
 
+On first launch you'll see the welcome screen with your recent files:
+
+![Welcome screen with recent files list](docs/screenshots/01-welcome.png)
+
 ## Navigation
 
 | Input | Action |
@@ -69,6 +51,44 @@ Or use **Ctrl+O** to open a file dialog inside the app.
 | Escape | Exit fullscreen |
 | Ctrl+O | Open file dialog |
 | Rotate button (toolbar) | Cycle display rotation: 0° → 90° → 180° → 270° |
+
+Once a PDF is open, the page fills the screen with the navigation bar at the bottom:
+
+![PDF open — full page view with navigation bar](docs/screenshots/02-pdf-open.png)
+
+**Half-page mode** splits each page into top and bottom halves, letting you read portrait-oriented content without the page being shrunk to fit. Activate it with the ½ button in the nav bar — each swipe advances one half before turning the physical page:
+
+![Half-page mode — top half of the current page](docs/screenshots/03-half-mode.png)
+
+**UI rotation** lets you manually rotate the entire interface 90° at a time using the toolbar button. Useful when your device's auto-rotation misbehaves or when you need landscape/portrait flexibility:
+
+![Display rotated 90° clockwise](docs/screenshots/10-rotated.png)
+
+## Filters
+
+Two display filters are available from the nav bar:
+
+**Sepia** warms the page to reduce eye strain during long practice sessions:
+
+![Sepia filter applied](docs/screenshots/08-sepia.png)
+
+**Invert** flips to a dark background for low-light environments:
+
+![Inverted display](docs/screenshots/09-invert.png)
+
+## Bookmarks
+
+Long-press the bookmark button to open the overlay and add or remove bookmarks on any page:
+
+![Bookmark overlay — add/remove bookmarks](docs/screenshots/07-bookmarks-overlay.png)
+
+The bookmark bar appears below the toolbar and lets you jump directly to any bookmarked page. Three width modes let you balance label visibility against screen space:
+
+![Bookmark bar — small width](docs/screenshots/04-bookmarks-s.png)
+
+![Bookmark bar — medium width](docs/screenshots/05-bookmarks-m.png)
+
+![Bookmark bar — large width, all rows visible](docs/screenshots/06-bookmarks-l.png)
 
 ## Use Case: Sheet Music & Lead Sheets
 
