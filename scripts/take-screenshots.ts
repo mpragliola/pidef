@@ -33,6 +33,16 @@ async function launch(args: string[] = []): Promise<{ app: ElectronApplication; 
   await app.evaluate(({ BrowserWindow }) => {
     BrowserWindow.getAllWindows()[0].setSize(1280, 800);
   });
+  // Set known defaults for all persisted UI state before React reads localStorage
+  await page.evaluate(() => {
+    localStorage.setItem('pidef-bookmark-display-mode', JSON.stringify('hidden'));
+    localStorage.setItem('pidef-bookmark-width-mode', JSON.stringify('s'));
+    localStorage.setItem('pidef-rotation', JSON.stringify(0));
+    localStorage.setItem('pidef-sepia', JSON.stringify(false));
+    localStorage.setItem('pidef-invert', JSON.stringify(false));
+  });
+  await page.reload();
+  await page.waitForLoadState('domcontentloaded');
   return { app, page };
 }
 
@@ -151,30 +161,22 @@ async function capturePdfStates(): Promise<void> {
     // 02 — normal PDF view
     await shot(page, '02-pdf-open.png');
 
-    // 03 — half-mode: use evaluate to call click() directly on the element,
-    // bypassing any pointer-event interception by the canvas overlay
-    await page.evaluate(() => (document.querySelector('#btn-half') as HTMLElement)?.click());
+    // 03 — half-mode
+    await page.locator('#btn-half').click();
+    // Wait until the button reflects the new state, then give canvas time to repaint
+    await page.waitForFunction(
+      () => document.querySelector('#btn-half')?.classList.contains('active'),
+      { timeout: 5000 }
+    );
+    await page.waitForTimeout(800);
     await shot(page, '03-half-mode.png');
-    await page.evaluate(() => (document.querySelector('#btn-half') as HTMLElement)?.click());
+    await page.locator('#btn-half').click();
     await page.waitForTimeout(SETTLE_MS);
 
-    // Bookmarks seeded programmatically — show bar in 1-line mode
+    // Bookmarks seeded programmatically — show bar in 1-line mode (starts hidden)
     await page.click('#btn-toggle-bookmarks-nav'); // hidden → 1-line
     await page.waitForSelector('.bookmark-pill', { timeout: 5000 });
-
-    // Ensure width mode starts at 's' — click until btn-width-control shows 's'
-    await page.waitForFunction(
-      () => document.querySelector('#btn-width-control')?.textContent?.trim() === 's',
-      { timeout: 3000 }
-    ).catch(async () => {
-      // Not at 's' yet — click through the cycle until we reach it
-      for (let i = 0; i < 3; i++) {
-        await page.click('#btn-width-control');
-        await page.waitForTimeout(100);
-        const label = await page.locator('#btn-width-control').textContent();
-        if (label?.trim() === 's') break;
-      }
-    });
+    // Width mode starts at 's' (set in localStorage before reload)
 
     // 04/05/06 — bookmark bar cropped to bar only, s → m → l
     await shotElement(page, '#bookmark-bar', '04-bookmarks-s.png');
