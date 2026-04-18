@@ -161,12 +161,12 @@ async function capturePdfStates(): Promise<void> {
     // 02 — normal PDF view
     await shot(page, '02-pdf-open.png');
 
-    // 03 — half-mode: extra wait for canvas repaint
+    // 03 — half-mode: toggle on, navigate to trigger re-render, then shoot
     await page.locator('#btn-half').click();
-    await page.waitForTimeout(1000);
-    await page.screenshot({ path: path.join(OUT_DIR, '03-half-mode.png') });
-    console.log('  ✓ 03-half-mode.png');
-    await page.locator('#btn-half').click();
+    await page.locator('#btn-next').click(); // triggers draw() with halfMode active
+    await shot(page, '03-half-mode.png');
+    await page.locator('#btn-half').click(); // exit half-mode
+    await page.locator('#btn-first').click(); // back to page 1
     await page.waitForTimeout(SETTLE_MS);
 
     // Bookmarks seeded programmatically — show bar in 1-line mode (starts hidden)
