@@ -83,17 +83,12 @@ function seedBookmarks(): void {
     { page: 3,  label: '4 — Sarabande grave' },
     { page: 4,  label: '5a — Double variation I' },
     { page: 5,  label: '5b — Double variation II' },
-    { page: 6,  label: '5c — Menuet en rondeau' },
-    { page: 7,  label: '6 — Gigue presto' },
-    { page: 8,  label: '7a — Bourée première' },
-    { page: 9,  label: '7b — Bourée deuxième' },
-    { page: 10, label: '8 — Gavotte en rondes' },
-    { page: 11, label: '9a — Loure pastorale' },
-    { page: 12, label: '9b — Loure variation' },
-    { page: 13, label: '10 — Chaconne majeure' },
-    { page: 14, label: '11a — Chaconne mineure' },
-    { page: 15, label: '11b — Chaconne finale' },
-    { page: 16, label: '12 — Coda con brio' },
+    { page: 6,  label: '6 — Menuet en rondeau' },
+    { page: 7,  label: '7 — Gigue presto' },
+    { page: 8,  label: '8a — Bourée première' },
+    { page: 9,  label: '8b — Bourée deuxième' },
+    { page: 10, label: '9 — Gavotte en rondes' },
+    { page: 11, label: '10 — Chaconne majeure' },
   ];
   fs.writeFileSync(
     `${FIXTURE_PDF}.json`,
@@ -157,23 +152,46 @@ async function capturePdfStates(): Promise<void> {
     // 02 — normal PDF view
     await shot(page, '02-pdf-open.png');
 
-    // 03 — half-mode
+    // 03 — half-mode: btn-half gets class 'active' when enabled
     await page.click('#btn-half');
+    await page.waitForFunction(
+      () => document.querySelector('#btn-half')?.classList.contains('active'),
+      { timeout: 3000 }
+    );
     await shot(page, '03-half-mode.png');
     await page.click('#btn-half'); // exit half-mode
-    await page.waitForTimeout(SETTLE_MS);
+    await page.waitForFunction(
+      () => !document.querySelector('#btn-half')?.classList.contains('active'),
+      { timeout: 3000 }
+    );
 
-    // Bookmarks seeded programmatically — show bar immediately in 1-line mode
+    // Bookmarks seeded programmatically — show bar in 1-line mode
     await page.click('#btn-toggle-bookmarks-nav'); // hidden → 1-line
     await page.waitForSelector('.bookmark-pill', { timeout: 5000 });
 
-    // 04/05/06 — bookmark bar cropped to bar only, cycling width modes
+    // Ensure width mode starts at 's' — click until btn-width-control shows 's'
+    await page.waitForFunction(
+      () => document.querySelector('#btn-width-control')?.textContent?.trim() === 's',
+      { timeout: 3000 }
+    ).catch(async () => {
+      // Not at 's' yet — click through the cycle until we reach it
+      for (let i = 0; i < 3; i++) {
+        await page.click('#btn-width-control');
+        await page.waitForTimeout(100);
+        const label = await page.locator('#btn-width-control').textContent();
+        if (label?.trim() === 's') break;
+      }
+    });
+
+    // 04/05/06 — bookmark bar cropped to bar only, s → m → l
     await shotElement(page, '#bookmark-bar', '04-bookmarks-s.png');
 
     await page.click('#btn-width-control'); // s → m
+    await page.waitForTimeout(100);
     await shotElement(page, '#bookmark-bar', '05-bookmarks-m.png');
 
     await page.click('#btn-width-control'); // m → l
+    await page.waitForTimeout(100);
     await shotElement(page, '#bookmark-bar', '06-bookmarks-l.png');
 
     // 07 — bookmark overlay (long press)
