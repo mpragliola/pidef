@@ -61,11 +61,20 @@ async function longPress(page: Page, selector: string): Promise<void> {
 
 function seedRecentFiles(): void {
   console.log('Seeding fake recent files...');
-  const fakeRecentFiles = [
-    { path: '/home/user/Music/beethoven-sonata-op27.pdf', page: 3 },
-    { path: '/home/user/Documents/bach-invention-no1.pdf', page: 0 },
-    { path: '/home/user/Music/chopin-nocturne-op9.pdf', page: 1 },
+  // Fake entries must point to real files (main process filters by fs.existsSync).
+  // Create stub PDFs in a temp subdir with believable names.
+  const stubDir = path.join(TEMP_USER_DATA, 'stubs');
+  fs.mkdirSync(stubDir, { recursive: true });
+  const stubs = [
+    { name: 'beethoven-sonata-op27.pdf', page: 3 },
+    { name: 'bach-invention-no1.pdf', page: 0 },
+    { name: 'chopin-nocturne-op9.pdf', page: 1 },
   ];
+  // Copy the fixture PDF as each stub (it's a valid PDF so the app won't choke)
+  for (const stub of stubs) {
+    fs.copyFileSync(FIXTURE_PDF, path.join(stubDir, stub.name));
+  }
+  const fakeRecentFiles = stubs.map(s => ({ path: path.join(stubDir, s.name), page: s.page }));
   fs.writeFileSync(
     path.join(TEMP_USER_DATA, 'recent-files.json'),
     JSON.stringify(fakeRecentFiles, null, 2)
@@ -77,23 +86,8 @@ async function captureWelcome(): Promise<void> {
   const { app, page } = await launch();
   try {
     await page.waitForSelector('#welcome-screen', { timeout: 10000 });
-    // Debug: check actual userData path used by this Electron instance
-    const actualUserData = await app.evaluate(({ app: a }) => a.getPath('userData'));
-    console.log(`  → TEMP_USER_DATA: ${TEMP_USER_DATA}`);
-    console.log(`  → Electron userData: ${actualUserData}`);
-    // Give React time to mount and fire the getRecentFiles IPC effect
+    // Wait for IPC effect to populate recent files list
     await page.waitForTimeout(2000);
-    const liCount = await page.evaluate(() => document.querySelectorAll('#recent-files-list li').length);
-    const ipcResult = await page.evaluate(async () => {
-      try {
-        const files = await (window as any).pidef.getRecentFiles();
-        return JSON.stringify(files);
-      } catch (e) {
-        return `ERROR: ${e}`;
-      }
-    });
-    console.log(`  → IPC getRecentFiles: ${ipcResult}`);
-    console.log(`  → recent-files li count: ${liCount}`);
     await shot(page, '01-welcome.png');
   } finally {
     await app.close();
