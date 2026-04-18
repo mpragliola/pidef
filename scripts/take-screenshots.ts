@@ -49,6 +49,13 @@ async function shot(page: Page, filename: string): Promise<void> {
   console.log(`  ✓ ${filename}`);
 }
 
+async function shotElement(page: Page, selector: string, filename: string): Promise<void> {
+  await page.waitForTimeout(SETTLE_MS);
+  const el = page.locator(selector);
+  await el.screenshot({ path: path.join(OUT_DIR, filename) });
+  console.log(`  ✓ ${filename}`);
+}
+
 async function longPress(page: Page, selector: string): Promise<void> {
   const btn = page.locator(selector);
   const box = await btn.boundingBox();
@@ -122,8 +129,12 @@ async function captureWelcome(): Promise<void> {
 
 async function capturePdfStates(): Promise<void> {
   console.log('Instance: PDF states');
-  const { app, page } = await launch([FIXTURE_PDF]);
+  const { app, page } = await launch();
   try {
+    // Send open-file after domcontentloaded so React's IPC listener is registered
+    await app.evaluate(({ BrowserWindow }, fp) => {
+      BrowserWindow.getAllWindows()[0].webContents.send('open-file', fp);
+    }, FIXTURE_PDF);
     await waitForPdf(page);
 
     // 02 — normal PDF view
@@ -139,16 +150,14 @@ async function capturePdfStates(): Promise<void> {
     await page.click('#btn-toggle-bookmarks-nav'); // hidden → 1-line
     await page.waitForSelector('.bookmark-pill', { timeout: 5000 });
 
-    // 04 — bookmark bar, small width mode (shows number+letter prefix only)
-    await shot(page, '04-bookmarks-s.png');
+    // 04/05/06 — bookmark bar cropped to bar only, cycling width modes
+    await shotElement(page, '#bookmark-bar', '04-bookmarks-s.png');
 
-    // 05 — medium width mode
     await page.click('#btn-width-control'); // s → m
-    await shot(page, '05-bookmarks-m.png');
+    await shotElement(page, '#bookmark-bar', '05-bookmarks-m.png');
 
-    // 06 — large width mode
     await page.click('#btn-width-control'); // m → l
-    await shot(page, '06-bookmarks-l.png');
+    await shotElement(page, '#bookmark-bar', '06-bookmarks-l.png');
 
     // 07 — bookmark overlay (long press)
     await longPress(page, '#btn-toggle-bookmarks-nav');
