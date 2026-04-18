@@ -112,18 +112,33 @@ async function capturePdfStates(): Promise<void> {
     await page.click('#btn-half'); // exit half-mode
     await page.waitForTimeout(SETTLE_MS);
 
-    // Add bookmarks on pages 1, 2, 3 — bookmark bar must be shown first
+    // Add bookmarks on pages 1, 2, 3
+    // btn-add-bookmark opens a text input; type a label and press Enter to save
     await page.click('#btn-toggle-bookmarks-nav'); // hidden → 1-line
-    await page.click('#btn-add-bookmark'); // bookmark page 1
+    await page.waitForSelector('#btn-add-bookmark', { timeout: 3000 });
+
+    await page.click('#btn-add-bookmark');
+    await page.waitForSelector('#bookmark-bar input[type="text"]', { timeout: 3000 });
+    await page.type('#bookmark-bar input[type="text"]', 'Prélude');
+    await page.keyboard.press('Enter');
     await page.waitForTimeout(200);
+
     await page.click('#btn-next');
     await page.waitForTimeout(300);
-    await page.click('#btn-add-bookmark'); // bookmark page 2
+    await page.click('#btn-add-bookmark');
+    await page.waitForSelector('#bookmark-bar input[type="text"]', { timeout: 3000 });
+    await page.type('#bookmark-bar input[type="text"]', 'Allemande');
+    await page.keyboard.press('Enter');
     await page.waitForTimeout(200);
+
     await page.click('#btn-next');
     await page.waitForTimeout(300);
-    await page.click('#btn-add-bookmark'); // bookmark page 3
+    await page.click('#btn-add-bookmark');
+    await page.waitForSelector('#bookmark-bar input[type="text"]', { timeout: 3000 });
+    await page.type('#bookmark-bar input[type="text"]', 'Courante');
+    await page.keyboard.press('Enter');
     await page.waitForTimeout(200);
+
     await page.click('#btn-first');
     await page.waitForTimeout(300);
 
