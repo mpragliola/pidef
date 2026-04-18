@@ -9,6 +9,11 @@ const OUT_DIR = path.join(ROOT, 'docs/screenshots');
 const DIST_MAIN = path.join(ROOT, 'dist/main.js');
 const SETTLE_MS = 400;
 
+if (fs.existsSync(OUT_DIR)) {
+  for (const f of fs.readdirSync(OUT_DIR).filter(f => f.endsWith('.png'))) {
+    fs.unlinkSync(path.join(OUT_DIR, f));
+  }
+}
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
 if (!fs.existsSync(FIXTURE_PDF)) {
