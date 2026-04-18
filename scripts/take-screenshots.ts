@@ -59,6 +59,29 @@ async function longPress(page: Page, selector: string): Promise<void> {
   await page.mouse.up();
 }
 
+function seedBookmarks(): void {
+  // Write bookmark sidecar JSON directly — no UI interaction needed.
+  // Labels use number+letter prefixes so all three width modes (s/m/l) look meaningful.
+  const bookmarks = [
+    { page: 0, label: '1 — Prélude' },
+    { page: 1, label: '2 — Allemande' },
+    { page: 2, label: '3 — Courante' },
+    { page: 3, label: '4a — Sarabande' },
+    { page: 4, label: '4b — Double' },
+    { page: 5, label: '5 — Menuets' },
+    { page: 6, label: '6 — Gigue' },
+  ];
+  fs.writeFileSync(
+    `${FIXTURE_PDF}.json`,
+    JSON.stringify({ bookmarks }, null, 2)
+  );
+}
+
+function cleanBookmarks(): void {
+  const jsonPath = `${FIXTURE_PDF}.json`;
+  if (fs.existsSync(jsonPath)) fs.unlinkSync(jsonPath);
+}
+
 function seedRecentFiles(): void {
   console.log('Seeding fake recent files...');
   // Fake entries must point to real files (main process filters by fs.existsSync).
@@ -112,62 +135,40 @@ async function capturePdfStates(): Promise<void> {
     await page.click('#btn-half'); // exit half-mode
     await page.waitForTimeout(SETTLE_MS);
 
-    // Add bookmarks on pages 1, 2, 3
-    // btn-add-bookmark opens a text input; type a label and press Enter to save
+    // Bookmarks seeded programmatically — show bar immediately in 1-line mode
     await page.click('#btn-toggle-bookmarks-nav'); // hidden → 1-line
-    await page.waitForSelector('#btn-add-bookmark', { timeout: 3000 });
+    await page.waitForSelector('.bookmark-pill', { timeout: 5000 });
 
-    await page.click('#btn-add-bookmark');
-    await page.waitForSelector('#bookmark-bar input[type="text"]', { timeout: 3000 });
-    await page.type('#bookmark-bar input[type="text"]', 'Prélude');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(200);
+    // 04 — bookmark bar, small width mode (shows number+letter prefix only)
+    await shot(page, '04-bookmarks-s.png');
 
-    await page.click('#btn-next');
-    await page.waitForTimeout(300);
-    await page.click('#btn-add-bookmark');
-    await page.waitForSelector('#bookmark-bar input[type="text"]', { timeout: 3000 });
-    await page.type('#bookmark-bar input[type="text"]', 'Allemande');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(200);
+    // 05 — medium width mode
+    await page.click('#btn-width-control'); // s → m
+    await shot(page, '05-bookmarks-m.png');
 
-    await page.click('#btn-next');
-    await page.waitForTimeout(300);
-    await page.click('#btn-add-bookmark');
-    await page.waitForSelector('#bookmark-bar input[type="text"]', { timeout: 3000 });
-    await page.type('#bookmark-bar input[type="text"]', 'Courante');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(200);
+    // 06 — large width mode
+    await page.click('#btn-width-control'); // m → l
+    await shot(page, '06-bookmarks-l.png');
 
-    await page.click('#btn-first');
-    await page.waitForTimeout(300);
-
-    // 04 — bookmark bar 1-line mode (already in 1-line)
-    await shot(page, '04-bookmarks-1line.png');
-
-    // 05 — bookmark bar all mode
-    await page.click('#btn-toggle-bookmarks-nav'); // 1-line → all
-    await shot(page, '05-bookmarks-all.png');
-
-    // 06 — bookmark overlay (long press)
+    // 07 — bookmark overlay (long press)
     await longPress(page, '#btn-toggle-bookmarks-nav');
-    await shot(page, '06-bookmarks-overlay.png');
+    await shot(page, '07-bookmarks-overlay.png');
     await page.click('#bookmark-overlay-backdrop');
     await page.waitForTimeout(SETTLE_MS);
 
-    // 07 — sepia filter
+    // 08 — sepia filter
     await page.click('#btn-sepia');
-    await shot(page, '07-sepia.png');
+    await shot(page, '08-sepia.png');
     await page.click('#btn-sepia'); // turn sepia off
 
-    // 08 — invert filter
+    // 09 — invert filter
     await page.click('#btn-invert');
-    await shot(page, '08-invert.png');
+    await shot(page, '09-invert.png');
     await page.click('#btn-invert'); // turn invert off
 
-    // 09 — rotated 90° CW
+    // 10 — rotated 90° CW
     await page.click('#btn-rotate-cw');
-    await shot(page, '09-rotated.png');
+    await shot(page, '10-rotated.png');
     await page.click('#btn-rotate-ccw'); // restore
   } finally {
     await app.close();
@@ -176,9 +177,11 @@ async function capturePdfStates(): Promise<void> {
 
 (async () => {
   console.log('Taking screenshots...');
+  seedBookmarks();
   seedRecentFiles();
   await captureWelcome();
   await capturePdfStates();
+  cleanBookmarks();
   fs.rmSync(TEMP_USER_DATA, { recursive: true, force: true });
   console.log('Done. Screenshots saved to docs/screenshots/');
 })();
