@@ -161,21 +161,8 @@ async function capturePdfStates(): Promise<void> {
     // 02 — normal PDF view
     await shot(page, '02-pdf-open.png');
 
-    // 03 — half-mode debug
-    const halfBtn = await page.evaluate(() => {
-      const el = document.querySelector('#btn-half') as HTMLButtonElement;
-      if (!el) return 'NOT FOUND';
-      const box = el.getBoundingClientRect();
-      return `disabled=${el.disabled} class="${el.className}" rect=${JSON.stringify({x: Math.round(box.x), y: Math.round(box.y), w: Math.round(box.width), h: Math.round(box.height)})}`
-    });
-    console.log(`  → btn-half: ${halfBtn}`);
+    // 03 — half-mode
     await page.locator('#btn-half').click();
-    await page.waitForTimeout(500);
-    const halfBtnAfter = await page.evaluate(() => {
-      const el = document.querySelector('#btn-half') as HTMLButtonElement;
-      return `disabled=${el?.disabled} class="${el?.className}"`;
-    });
-    console.log(`  → btn-half after click: ${halfBtnAfter}`);
     await shot(page, '03-half-mode.png');
     await page.locator('#btn-half').click();
     await page.waitForTimeout(SETTLE_MS);
