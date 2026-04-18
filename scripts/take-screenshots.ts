@@ -151,22 +151,11 @@ async function capturePdfStates(): Promise<void> {
     // 02 — normal PDF view
     await shot(page, '02-pdf-open.png');
 
-    // 03 — half-mode: wait for btn-half to be enabled, then toggle
-    await page.waitForFunction(
-      () => !(document.querySelector('#btn-half') as HTMLButtonElement)?.disabled,
-      { timeout: 10000 }
-    );
-    await page.click('#btn-half');
-    await page.waitForFunction(
-      () => document.querySelector('#btn-half')?.classList.contains('active'),
-      { timeout: 5000 }
-    );
+    // 03 — half-mode: locator auto-waits for enabled state before clicking
+    await page.locator('#btn-half:not([disabled])').click({ timeout: 10000 });
     await shot(page, '03-half-mode.png');
-    await page.click('#btn-half'); // exit half-mode
-    await page.waitForFunction(
-      () => !document.querySelector('#btn-half')?.classList.contains('active'),
-      { timeout: 3000 }
-    );
+    await page.locator('#btn-half:not([disabled])').click({ timeout: 5000 });
+    await page.waitForTimeout(SETTLE_MS);
 
     // Bookmarks seeded programmatically — show bar in 1-line mode
     await page.click('#btn-toggle-bookmarks-nav'); // hidden → 1-line
