@@ -2,12 +2,16 @@ import { _electron as electron } from '@playwright/test';
 import type { ElectronApplication, Page } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
 
 const ROOT = path.resolve(__dirname, '..');
 const FIXTURE_PDF = path.join(ROOT, 'docs/fixtures/bach-cello-suite-1-bwv1007.pdf');
 const OUT_DIR = path.join(ROOT, 'docs/screenshots');
 const DIST_MAIN = path.join(ROOT, 'dist/main.js');
 const SETTLE_MS = 400;
+
+// Isolated userData dir for this script run — never touches real user state
+const TEMP_USER_DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'pidef-screenshots-'));
 
 if (fs.existsSync(OUT_DIR)) {
   for (const f of fs.readdirSync(OUT_DIR).filter(f => f.endsWith('.png'))) {
@@ -22,23 +26,13 @@ if (!fs.existsSync(FIXTURE_PDF)) {
 }
 
 async function launch(args: string[] = []): Promise<{ app: ElectronApplication; page: Page }> {
-  const app = await electron.launch({ args: [DIST_MAIN, ...args] });
+  // --user-data-dir isolates this run from real user state (localStorage, recent-files, etc.)
+  const app = await electron.launch({ args: [DIST_MAIN, `--user-data-dir=${TEMP_USER_DATA}`, ...args] });
   const page = await app.firstWindow();
   await page.waitForLoadState('domcontentloaded');
   await app.evaluate(({ BrowserWindow }) => {
     BrowserWindow.getAllWindows()[0].setSize(1280, 800);
   });
-  // Reset all persisted UI state so every instance starts at known defaults
-  await page.evaluate(() => {
-    localStorage.setItem('pidef-rotation', '0');
-    localStorage.setItem('pidef-sepia', 'false');
-    localStorage.setItem('pidef-invert', 'false');
-    localStorage.setItem('pidef-bookmark-display-mode', '"hidden"');
-    localStorage.removeItem('pidef-brightness');
-  });
-  // Force a reload so the reset values are picked up by React state
-  await page.reload();
-  await page.waitForLoadState('domcontentloaded');
   return { app, page };
 }
 
@@ -65,23 +59,17 @@ async function longPress(page: Page, selector: string): Promise<void> {
   await page.mouse.up();
 }
 
-async function seedRecentFiles(): Promise<void> {
+function seedRecentFiles(): void {
   console.log('Seeding fake recent files...');
-  const { app } = await launch();
-  try {
-    const userDataPath = await app.evaluate(({ app: electronApp }) => electronApp.getPath('userData'));
-    const fakeRecentFiles = [
-      { path: '/home/user/Music/beethoven-sonata-op27.pdf', page: 3 },
-      { path: '/home/user/Documents/bach-invention-no1.pdf', page: 0 },
-      { path: '/home/user/Music/chopin-nocturne-op9.pdf', page: 1 },
-    ];
-    fs.writeFileSync(
-      path.join(userDataPath, 'recent-files.json'),
-      JSON.stringify(fakeRecentFiles, null, 2)
-    );
-  } finally {
-    await app.close();
-  }
+  const fakeRecentFiles = [
+    { path: '/home/user/Music/beethoven-sonata-op27.pdf', page: 3 },
+    { path: '/home/user/Documents/bach-invention-no1.pdf', page: 0 },
+    { path: '/home/user/Music/chopin-nocturne-op9.pdf', page: 1 },
+  ];
+  fs.writeFileSync(
+    path.join(TEMP_USER_DATA, 'recent-files.json'),
+    JSON.stringify(fakeRecentFiles, null, 2)
+  );
 }
 
 async function captureWelcome(): Promise<void> {
@@ -164,8 +152,9 @@ async function capturePdfStates(): Promise<void> {
 
 (async () => {
   console.log('Taking screenshots...');
-  await seedRecentFiles();
+  seedRecentFiles();
   await captureWelcome();
   await capturePdfStates();
+  fs.rmSync(TEMP_USER_DATA, { recursive: true, force: true });
   console.log('Done. Screenshots saved to docs/screenshots/');
 })();
