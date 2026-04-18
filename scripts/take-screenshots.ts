@@ -77,9 +77,12 @@ async function captureWelcome(): Promise<void> {
   const { app, page } = await launch();
   try {
     await page.waitForSelector('#welcome-screen', { timeout: 10000 });
+    // Debug: check actual userData path used by this Electron instance
+    const actualUserData = await app.evaluate(({ app: a }) => a.getPath('userData'));
+    console.log(`  → TEMP_USER_DATA: ${TEMP_USER_DATA}`);
+    console.log(`  → Electron userData: ${actualUserData}`);
     // Give React time to mount and fire the getRecentFiles IPC effect
     await page.waitForTimeout(2000);
-    // Debug: log how many li elements are present
     const liCount = await page.evaluate(() => document.querySelectorAll('#recent-files-list li').length);
     console.log(`  → recent-files li count: ${liCount}`);
     await shot(page, '01-welcome.png');
