@@ -26,11 +26,7 @@ async function launch(args: string[] = []): Promise<{ app: ElectronApplication; 
   return { app, page };
 }
 
-async function openPdf(app: ElectronApplication, page: Page, filePath: string): Promise<void> {
-  await app.evaluate(({ BrowserWindow }, fp) => {
-    BrowserWindow.getAllWindows()[0].webContents.send('open-file', fp);
-  }, filePath);
-  await page.waitForSelector('#nav-label', { timeout: 15000 });
+async function waitForPdf(page: Page): Promise<void> {
   await page.waitForFunction(
     () => /Page \d+ \/ \d+/.test(document.querySelector('#nav-label')?.textContent ?? ''),
     { timeout: 15000 }
@@ -43,11 +39,41 @@ async function shot(page: Page, filename: string): Promise<void> {
   console.log(`  ✓ ${filename}`);
 }
 
+async function longPress(page: Page, selector: string): Promise<void> {
+  const btn = page.locator(selector);
+  const box = await btn.boundingBox();
+  if (!box) throw new Error(`${selector} not found`);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(600);
+  await page.mouse.up();
+}
+
+async function seedRecentFiles(): Promise<void> {
+  console.log('Seeding fake recent files...');
+  const { app } = await launch();
+  try {
+    const userDataPath = await app.evaluate(({ app: electronApp }) => electronApp.getPath('userData'));
+    const fakeRecentFiles = [
+      { path: '/home/user/Music/beethoven-sonata-op27.pdf', page: 3 },
+      { path: '/home/user/Documents/bach-invention-no1.pdf', page: 0 },
+      { path: '/home/user/Music/chopin-nocturne-op9.pdf', page: 1 },
+    ];
+    fs.writeFileSync(
+      path.join(userDataPath, 'recent-files.json'),
+      JSON.stringify(fakeRecentFiles, null, 2)
+    );
+  } finally {
+    await app.close();
+  }
+}
+
 async function captureWelcome(): Promise<void> {
-  console.log('Instance 1: welcome screen');
+  console.log('Instance: welcome screen');
   const { app, page } = await launch();
   try {
     await page.waitForSelector('#welcome-screen', { timeout: 10000 });
+    await page.waitForSelector('#recent-files-list li', { timeout: 5000 });
     await shot(page, '01-welcome.png');
   } finally {
     await app.close();
@@ -55,88 +81,71 @@ async function captureWelcome(): Promise<void> {
 }
 
 async function capturePdfStates(): Promise<void> {
-  console.log('Instance 2: PDF states');
+  console.log('Instance: PDF states');
   const { app, page } = await launch([FIXTURE_PDF]);
   try {
-    await page.waitForFunction(
-      () => /Page \d+ \/ \d+/.test(document.querySelector('#nav-label')?.textContent ?? ''),
-      { timeout: 15000 }
-    );
+    await waitForPdf(page);
 
     // 02 — normal PDF view
     await shot(page, '02-pdf-open.png');
 
-    // 03 — half-mode (left half)
+    // 03 — half-mode
     await page.click('#btn-half');
     await shot(page, '03-half-mode.png');
-    // Exit half-mode
-    await page.click('#btn-half');
+    await page.click('#btn-half'); // exit half-mode
     await page.waitForTimeout(SETTLE_MS);
 
-    // 04 — bookmark bar with one bookmark
-    await page.click('#btn-add-bookmark');
+    // Add bookmarks on pages 1, 2, 3 — bookmark bar must be shown first
+    await page.click('#btn-toggle-bookmarks-nav'); // hidden → 1-line
+    await page.click('#btn-add-bookmark'); // bookmark page 1
     await page.waitForTimeout(200);
-    await page.click('#btn-toggle-bookmarks-nav'); // hidden → 1-line mode
-    await shot(page, '04-bookmarks-bar.png');
+    await page.click('#btn-next');
+    await page.waitForTimeout(300);
+    await page.click('#btn-add-bookmark'); // bookmark page 2
+    await page.waitForTimeout(200);
+    await page.click('#btn-next');
+    await page.waitForTimeout(300);
+    await page.click('#btn-add-bookmark'); // bookmark page 3
+    await page.waitForTimeout(200);
+    await page.click('#btn-first');
+    await page.waitForTimeout(300);
 
-    // 05 — bookmark overlay (long press on bookmark button)
-    const btn = page.locator('#btn-toggle-bookmarks-nav');
-    const box = await btn.boundingBox();
-    if (!box) throw new Error('#btn-toggle-bookmarks-nav not found');
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.waitForTimeout(600);
-    await page.mouse.up();
-    await shot(page, '05-bookmarks-overlay.png');
-    // Close overlay
+    // 04 — bookmark bar 1-line mode (already in 1-line)
+    await shot(page, '04-bookmarks-1line.png');
+
+    // 05 — bookmark bar all mode
+    await page.click('#btn-toggle-bookmarks-nav'); // 1-line → all
+    await shot(page, '05-bookmarks-all.png');
+
+    // 06 — bookmark overlay (long press)
+    await longPress(page, '#btn-toggle-bookmarks-nav');
+    await shot(page, '06-bookmarks-overlay.png');
     await page.click('#bookmark-overlay-backdrop');
     await page.waitForTimeout(SETTLE_MS);
 
-    // 06 — fullscreen
-    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setFullScreen(true));
-    await page.waitForFunction(
-      () => document.body.classList.contains('fullscreen') ||
-            window.outerHeight === window.screen.height,
-      { timeout: 10000 }
-    );
-    await shot(page, '06-fullscreen.png');
-    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setFullScreen(false));
-    await page.waitForTimeout(1000);
+    // 07 — sepia filter
+    await page.click('#btn-sepia');
+    await shot(page, '07-sepia.png');
+    await page.click('#btn-sepia'); // turn sepia off
 
-    // 07 — rotated 90° CW
+    // 08 — invert filter
+    await page.click('#btn-invert');
+    await shot(page, '08-invert.png');
+    await page.click('#btn-invert'); // turn invert off
+
+    // 09 — rotated 90° CW
     await page.click('#btn-rotate-cw');
-    await shot(page, '07-rotated-90.png');
-    // Restore rotation
-    await page.click('#btn-rotate-ccw');
+    await shot(page, '09-rotated.png');
+    await page.click('#btn-rotate-ccw'); // restore
   } finally {
     await app.close();
-  }
-}
-
-async function captureRecentFiles(): Promise<void> {
-  console.log('Instance 3: populate recent files history');
-  const { app, page } = await launch();
-  try {
-    await openPdf(app, page, FIXTURE_PDF);
-  } finally {
-    await app.close();
-  }
-
-  console.log('Instance 4: recent files on welcome screen');
-  const { app: app2, page: page2 } = await launch();
-  try {
-    await page2.waitForSelector('#welcome-screen', { timeout: 10000 });
-    await page2.waitForSelector('#recent-files-list li', { timeout: 10000 });
-    await shot(page2, '08-recent-files.png');
-  } finally {
-    await app2.close();
   }
 }
 
 (async () => {
   console.log('Taking screenshots...');
+  await seedRecentFiles();
   await captureWelcome();
   await capturePdfStates();
-  await captureRecentFiles();
-  console.log(`Done. Screenshots saved to docs/screenshots/`);
+  console.log('Done. Screenshots saved to docs/screenshots/');
 })();
