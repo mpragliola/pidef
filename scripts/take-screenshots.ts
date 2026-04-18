@@ -161,9 +161,11 @@ async function capturePdfStates(): Promise<void> {
     // 02 — normal PDF view
     await shot(page, '02-pdf-open.png');
 
-    // 03 — half-mode
+    // 03 — half-mode: extra wait for canvas repaint
     await page.locator('#btn-half').click();
-    await shot(page, '03-half-mode.png');
+    await page.waitForTimeout(1000);
+    await page.screenshot({ path: path.join(OUT_DIR, '03-half-mode.png') });
+    console.log('  ✓ 03-half-mode.png');
     await page.locator('#btn-half').click();
     await page.waitForTimeout(SETTLE_MS);
 
