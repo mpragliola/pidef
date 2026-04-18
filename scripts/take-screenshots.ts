@@ -41,6 +41,13 @@ async function waitForPdf(page: Page): Promise<void> {
     () => /Page \d+ \/ \d+/.test(document.querySelector('#nav-label')?.textContent ?? ''),
     { timeout: 15000 }
   );
+  // Wait for welcome screen to disappear (signals pdfDoc is set and canvas is active)
+  await page.waitForFunction(
+    () => document.querySelector('#welcome-screen') === null,
+    { timeout: 10000 }
+  );
+  // Give the renderer one frame to paint the first page
+  await page.waitForTimeout(600);
 }
 
 async function shot(page: Page, filename: string): Promise<void> {
