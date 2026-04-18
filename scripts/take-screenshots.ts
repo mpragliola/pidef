@@ -77,13 +77,23 @@ function seedBookmarks(): void {
   // Write bookmark sidecar JSON directly — no UI interaction needed.
   // Labels use number+letter prefixes so all three width modes (s/m/l) look meaningful.
   const bookmarks = [
-    { page: 0, label: '1 — Prélude' },
-    { page: 1, label: '2 — Allemande' },
-    { page: 2, label: '3 — Courante' },
-    { page: 3, label: '4a — Sarabande' },
-    { page: 4, label: '4b — Double' },
-    { page: 5, label: '5 — Menuets' },
-    { page: 6, label: '6 — Gigue' },
+    { page: 0,  label: '1 — Prélude' },
+    { page: 1,  label: '2 — Allemande' },
+    { page: 2,  label: '3 — Courante' },
+    { page: 3,  label: '4 — Sarabande' },
+    { page: 4,  label: '5a — Double' },
+    { page: 5,  label: '5b — Menuet I' },
+    { page: 6,  label: '5c — Menuet II' },
+    { page: 7,  label: '6 — Gigue' },
+    { page: 8,  label: '7a — Bourée I' },
+    { page: 9,  label: '7b — Bourée II' },
+    { page: 10, label: '8 — Gavotte' },
+    { page: 11, label: '9a — Loure' },
+    { page: 12, label: '9b — Loure var.' },
+    { page: 13, label: '10 — Chaconne' },
+    { page: 14, label: '11a — Chac. A' },
+    { page: 15, label: '11b — Chac. B' },
+    { page: 16, label: '12 — Finale' },
   ];
   fs.writeFileSync(
     `${FIXTURE_PDF}.json`,
