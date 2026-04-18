@@ -84,6 +84,15 @@ async function captureWelcome(): Promise<void> {
     // Give React time to mount and fire the getRecentFiles IPC effect
     await page.waitForTimeout(2000);
     const liCount = await page.evaluate(() => document.querySelectorAll('#recent-files-list li').length);
+    const ipcResult = await page.evaluate(async () => {
+      try {
+        const files = await (window as any).pidef.getRecentFiles();
+        return JSON.stringify(files);
+      } catch (e) {
+        return `ERROR: ${e}`;
+      }
+    });
+    console.log(`  → IPC getRecentFiles: ${ipcResult}`);
     console.log(`  → recent-files li count: ${liCount}`);
     await shot(page, '01-welcome.png');
   } finally {
