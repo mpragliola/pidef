@@ -1009,6 +1009,7 @@ export function usePdfEngine(
         currentSurf.current = bmp;
         bgScan();
         draw();
+        canvasRef.current?.setAttribute('data-surf-ready', 'true');
       });
     } else {
       draw();

@@ -161,29 +161,53 @@ async function capturePdfStates(): Promise<void> {
     // 02 — normal PDF view
     await shot(page, '02-pdf-open.png');
 
-    // 03 — half-mode: toggle on, navigate to trigger re-render, then shoot
+    // 03 — half-mode: toggle on, wait for the async re-render to complete, shoot
+    // Clear the ready signal before toggling so the poll below waits for the new render.
+    await page.evaluate(() => document.querySelector('canvas')?.removeAttribute('data-surf-ready'));
     await page.locator('#btn-half').click();
-    await page.locator('#btn-next').click(); // triggers draw() with halfMode active
+    await page.waitForFunction(
+      () => document.querySelector('#btn-half')?.classList.contains('active'),
+      { timeout: 5000 }
+    );
+    // The halfMode effect clears the cache and calls renderPage asynchronously.
+    // Wait until the bitmap is painted (signalled by data-surf-ready on the canvas).
+    await page.waitForFunction(
+      () => document.querySelector('canvas')?.getAttribute('data-surf-ready') === 'true',
+      { timeout: 10000 }
+    );
     await shot(page, '03-half-mode.png');
-    await page.locator('#btn-half').click(); // exit half-mode
-    await page.locator('#btn-first').click(); // back to page 1
-    await page.waitForTimeout(SETTLE_MS);
+    // Restore normal mode
+    await page.locator('#btn-half').click();
+    await page.waitForFunction(
+      () => !document.querySelector('#btn-half')?.classList.contains('active'),
+      { timeout: 5000 }
+    );
 
     // Bookmarks seeded programmatically — show bar in 1-line mode (starts hidden)
     await page.click('#btn-toggle-bookmarks-nav'); // hidden → 1-line
     await page.waitForSelector('.bookmark-pill', { timeout: 5000 });
     // Width mode starts at 's' (set in localStorage before reload)
 
-    // 04/05/06 — bookmark bar cropped to bar only, s → m → l
+    // 04 — s width, 1-line mode
     await shotElement(page, '#bookmark-bar', '04-bookmarks-s.png');
 
+    // 05 — m width, 1-line mode
     await page.click('#btn-width-control'); // s → m
     await page.waitForTimeout(100);
     await shotElement(page, '#bookmark-bar', '05-bookmarks-m.png');
 
+    // 06 — l width, all (multiline) mode — one more toggle to reach 'all'
     await page.click('#btn-width-control'); // m → l
-    await page.waitForTimeout(100);
+    await page.click('#btn-toggle-bookmarks-nav'); // 1-line → all
+    await page.waitForFunction(
+      () => document.querySelector('#bookmark-bar')?.classList.contains('mode-all'),
+      { timeout: 3000 }
+    );
     await shotElement(page, '#bookmark-bar', '06-bookmarks-l.png');
+    // Restore 1-line mode for the overlay shot
+    await page.click('#btn-toggle-bookmarks-nav'); // all → hidden
+    await page.click('#btn-toggle-bookmarks-nav'); // hidden → 1-line
+    await page.waitForSelector('.bookmark-pill', { timeout: 3000 });
 
     // 07 — bookmark overlay (long press)
     await longPress(page, '#btn-toggle-bookmarks-nav');
