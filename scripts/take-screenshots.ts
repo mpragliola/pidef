@@ -78,7 +78,13 @@ async function captureWelcome(): Promise<void> {
   const { app, page } = await launch();
   try {
     await page.waitForSelector('#welcome-screen', { timeout: 10000 });
-    await page.waitForSelector('#recent-files-list li', { timeout: 5000 });
+    await page.waitForLoadState('load');
+    // Wait for recent files list to populate via IPC (may take a moment after mount)
+    try {
+      await page.waitForSelector('#recent-files-list li', { timeout: 15000 });
+    } catch {
+      console.warn('  ⚠ recent-files-list has no entries — screenshot will show empty list');
+    }
     await shot(page, '01-welcome.png');
   } finally {
     await app.close();
