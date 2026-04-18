@@ -151,10 +151,11 @@ async function capturePdfStates(): Promise<void> {
     // 02 — normal PDF view
     await shot(page, '02-pdf-open.png');
 
-    // 03 — half-mode: locator auto-waits for enabled state before clicking
-    await page.locator('#btn-half:not([disabled])').click({ timeout: 10000 });
+    // 03 — half-mode: use evaluate to call click() directly on the element,
+    // bypassing any pointer-event interception by the canvas overlay
+    await page.evaluate(() => (document.querySelector('#btn-half') as HTMLElement)?.click());
     await shot(page, '03-half-mode.png');
-    await page.locator('#btn-half:not([disabled])').click({ timeout: 5000 });
+    await page.evaluate(() => (document.querySelector('#btn-half') as HTMLElement)?.click());
     await page.waitForTimeout(SETTLE_MS);
 
     // Bookmarks seeded programmatically — show bar in 1-line mode
