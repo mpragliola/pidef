@@ -112,9 +112,8 @@ function seedRecentFiles(): void {
     { name: 'bach-invention-no1.pdf', page: 0 },
     { name: 'chopin-nocturne-op9.pdf', page: 1 },
   ];
-  // Copy the fixture PDF as each stub (it's a valid PDF so the app won't choke)
   for (const stub of stubs) {
-    fs.copyFileSync(FIXTURE_PDF, path.join(stubDir, stub.name));
+    fs.symlinkSync(FIXTURE_PDF, path.join(stubDir, stub.name));
   }
   const fakeRecentFiles = stubs.map(s => ({ path: path.join(stubDir, s.name), page: s.page }));
   fs.writeFileSync(
