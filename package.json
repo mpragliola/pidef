@@ -11,7 +11,8 @@
     "dev": "npm run build && electron dist/main.js",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "screenshots": "tsx scripts/take-screenshots.ts"
   },
   "dependencies": {
     "@fortawesome/free-solid-svg-icons": "^7.2.0",
@@ -29,6 +30,7 @@
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "sass": "^1.87.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.8.3",
     "vite": "^5.4.21",
     "vitest": "^2.0.0"
