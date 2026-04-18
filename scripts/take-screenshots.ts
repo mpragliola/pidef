@@ -86,8 +86,11 @@ async function captureWelcome(): Promise<void> {
   const { app, page } = await launch();
   try {
     await page.waitForSelector('#welcome-screen', { timeout: 10000 });
-    // Wait for IPC effect to populate recent files list
-    await page.waitForTimeout(2000);
+    // Poll until IPC effect populates the recent files list
+    await page.waitForFunction(
+      () => document.querySelectorAll('#recent-files-list li').length > 0,
+      { timeout: 10000 }
+    );
     await shot(page, '01-welcome.png');
   } finally {
     await app.close();
