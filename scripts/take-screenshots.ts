@@ -77,11 +77,11 @@ async function captureWelcome(): Promise<void> {
   const { app, page } = await launch();
   try {
     await page.waitForSelector('#welcome-screen', { timeout: 10000 });
-    // Wait for the IPC bridge and React effect to populate the recent files list
-    await page.waitForFunction(
-      () => document.querySelectorAll('#recent-files-list li').length > 0,
-      { timeout: 15000 }
-    );
+    // Give React time to mount and fire the getRecentFiles IPC effect
+    await page.waitForTimeout(2000);
+    // Debug: log how many li elements are present
+    const liCount = await page.evaluate(() => document.querySelectorAll('#recent-files-list li').length);
+    console.log(`  → recent-files li count: ${liCount}`);
     await shot(page, '01-welcome.png');
   } finally {
     await app.close();
