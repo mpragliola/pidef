@@ -52,11 +52,11 @@ On first launch you'll see the welcome screen with your recent files:
 | Input | Action |
 |-------|--------|
 | Swipe left or right | Next / previous page |
-| Right arrow, Page Down, Space | Next page |
-| Left arrow, Page Up, Backspace | Previous page |
-| F11 or tap fullscreen button | Toggle fullscreen |
-| Escape | Exit fullscreen |
-| Ctrl+O | Open file dialog |
+| <kbd>&rarr;</kbd>, <kbd>Pg &darr;</kbd> or <kbd>Space</kbd> | Next page |
+| <kbd>&larr;</kbd>, <kbd>Pg &uarr;</kbd> or <kbd>&larr; backspace</kbd> | Previous page |
+| <kbd>F11</kbd> or tap fullscreen button | Toggle fullscreen |
+| <kbd>Esc</kbd> | Exit fullscreen |
+| <kbd>Ctrl</kbd>+<kbd>O</kbd> | Open file dialog |
 | Rotate button (toolbar) | Cycle display rotation: 0° → 90° → 180° → 270° |
 
 Once a PDF is open, the page fills the screen with the navigation bar at the bottom:
