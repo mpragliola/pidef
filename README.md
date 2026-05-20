@@ -4,22 +4,20 @@ A minimal Electron PDF reader built for **touchscreen performance**. Designed sp
 
 ## Why pidef?
 
-To read sheet music a musician, there are contexts where I can benefit of the larger screen of a laptop rather 
-than a tablet, even better if the laptop is hybrid/foldable and touch-enabled.  
-Very frustratingly, the auto-rotation feature of my Ubuntu OS does not behave always reliably on my own notebook;
-and the Ubuntu PDF readers I found - whether desktop or mobile - introduce frustrating delays, imprecise touch targets, 
-or hover-dependent interfaces that don't work with fingers. They're built for mouse-first workflows with touchscreen 
-bolted on as an afterthought.
-Other than soling this issues, it was tempting to craft, with the help of AI, a tailor-made reader for musiciuan with 
-all the essential functions, resented in the most functional way, and added goodies like bookmark metadata.
+As a musician, I often enjoy reading sheet music from my touch-enable, foldable laptop, rather than the
+smaller tablet. Very frustratingly, the auto-rotation feature of my Ubuntu OS does not behave reliably,
+and the readers I found would introduce frustrating delays, imprecise touch targets, or hover-dependent
+interfaces that don't work with fingers, based on mouse-first workflows with touchscreen bolted on as an
+afterthought.
 
-**pidef** is **touch-first from the ground up**, optimized for Ubuntu touchscreen laptops and tablets. If you're 
-standing with a sheet music reader or lead sheets in hand, you need gestures that work reliably under pressure, 
-buttons you can hit with a finger, and animations that feel responsive, not sluggish.
+**pidef** is **touch-first from the ground up**; it's optimized for fast, optimized and reliable
+interaction, it can simulate screen rotation, and offers useful features like custom bookmarks with fast
+navigation.
 
 ## Features
 
 - **Fast swipe navigation** - Left/right gestures turn pages with natural snap-back feedback
+- **Custom bookmarks** - Pages can be bookmarked and bookmarks navigated to independently from the PDF
 - **Touch-optimized UI** - All buttons are minimum 44×44px (preferably 48×48px) for reliable finger operation
 - **Full-screen mode** - Maximize reading area with one tap; minimize UI clutter during performance
 - **Smooth 220ms animations** - Page transitions feel responsive without motion fatigue over long practice sessions
